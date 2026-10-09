@@ -1,0 +1,78 @@
+package com.chatApp.cloudChat.model;
+
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+
+import java.util.Objects;
+
+@Entity
+public class Attachments {
+    @Id
+    private Long messageId;
+    private String filename;
+    private Long size;
+    private String contentType;
+    private String objectKey;
+
+    public Attachments() {}
+
+    public Attachments(Long messageId, String filename, Long size, String contentType, String objectKey) {
+        this.messageId = messageId;
+        this.filename = filename;
+        this.size = size;
+        this.contentType = contentType;
+        this.objectKey = objectKey;
+    }
+
+    public Long getMessage_id() {
+        return messageId;
+    }
+
+    public void setMessage_id(Long messageId) {
+        this.messageId = messageId;
+    }
+
+    public String getFilename() {
+        return filename;
+    }
+
+    public void setFilename(String filename) {
+        this.filename = filename;
+    }
+
+    public Long getSize() {
+        return size;
+    }
+
+    public void setSize(Long size) {
+        this.size = size;
+    }
+
+    public String getContentType() {
+        return contentType;
+    }
+
+    public void setContentType(String contentType) {
+        this.contentType = contentType;
+    }
+
+    public String getObjectKey() {
+        return objectKey;
+    }
+
+    public void setObjectKey(String objectKey) {
+        this.objectKey = objectKey;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o == null || getClass() != o.getClass()) return false;
+        Attachments that = (Attachments) o;
+        return Objects.equals(messageId, that.messageId) && Objects.equals(filename, that.filename) && Objects.equals(size, that.size) && Objects.equals(contentType, that.contentType) && Objects.equals(objectKey, that.objectKey);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(messageId, filename, size, contentType, objectKey);
+    }
+}
