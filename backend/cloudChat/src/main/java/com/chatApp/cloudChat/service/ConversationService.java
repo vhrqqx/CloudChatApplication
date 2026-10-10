@@ -4,6 +4,7 @@ import com.chatApp.cloudChat.model.Conversations;
 import com.chatApp.cloudChat.repository.ConversationRepo;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -17,5 +18,11 @@ public class ConversationService {
     }
     public void deleteByConversationId(Long id) {
         conversationRepo.deleteById(id);
+    }
+    public Conversations createConversation(Conversations conversation) {
+        return conversationRepo.save(conversation);
+    }
+    public List<Conversations> getAllConversations() {
+        return conversationRepo.findAll();
     }
 }

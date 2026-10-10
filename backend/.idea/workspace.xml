@@ -6,9 +6,21 @@
   <component name="ChangeListManager">
     <list default="true" id="15014cc0-a34c-430a-af8a-b3cf0db48a9c" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/cloudChat/.no-vibe/data/sessions/backend-setup.json" beforeDir="false" afterPath="$PROJECT_DIR$/cloudChat/.no-vibe/data/sessions/backend-setup.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/cloudChat/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/cloudChat/pom.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/cloudChat/src/main/resources/application.properties" beforeDir="false" afterPath="$PROJECT_DIR$/cloudChat/src/main/resources/application.properties" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../deploy/docker-compose.yml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/cloudChat/src/main/java/com/chatApp/cloudChat/model/Attachments.java" beforeDir="false" afterPath="$PROJECT_DIR$/cloudChat/src/main/java/com/chatApp/cloudChat/model/Attachments.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/cloudChat/src/main/java/com/chatApp/cloudChat/model/ConversationMember.java" beforeDir="false" afterPath="$PROJECT_DIR$/cloudChat/src/main/java/com/chatApp/cloudChat/model/ConversationMember.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/cloudChat/src/main/java/com/chatApp/cloudChat/model/Conversations.java" beforeDir="false" afterPath="$PROJECT_DIR$/cloudChat/src/main/java/com/chatApp/cloudChat/model/Conversations.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/cloudChat/src/main/java/com/chatApp/cloudChat/model/Messages.java" beforeDir="false" afterPath="$PROJECT_DIR$/cloudChat/src/main/java/com/chatApp/cloudChat/model/Messages.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/cloudChat/src/main/java/com/chatApp/cloudChat/model/Users.java" beforeDir="false" afterPath="$PROJECT_DIR$/cloudChat/src/main/java/com/chatApp/cloudChat/model/Users.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/cloudChat/src/main/java/com/chatApp/cloudChat/repository/ConversationMemberRepo.java" beforeDir="false" afterPath="$PROJECT_DIR$/cloudChat/src/main/java/com/chatApp/cloudChat/repository/ConversationMemberRepo.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/cloudChat/src/main/java/com/chatApp/cloudChat/repository/ConversationRepo.java" beforeDir="false" afterPath="$PROJECT_DIR$/cloudChat/src/main/java/com/chatApp/cloudChat/repository/ConversationRepo.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/cloudChat/src/main/java/com/chatApp/cloudChat/repository/MessagesRepo.java" beforeDir="false" afterPath="$PROJECT_DIR$/cloudChat/src/main/java/com/chatApp/cloudChat/repository/MessagesRepo.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/cloudChat/src/main/java/com/chatApp/cloudChat/repository/UsersRepo.java" beforeDir="false" afterPath="$PROJECT_DIR$/cloudChat/src/main/java/com/chatApp/cloudChat/repository/UsersRepo.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/cloudChat/src/main/java/com/chatApp/cloudChat/service/AttachmentService.java" beforeDir="false" afterPath="$PROJECT_DIR$/cloudChat/src/main/java/com/chatApp/cloudChat/service/AttachmentService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/cloudChat/src/main/java/com/chatApp/cloudChat/service/ConversationMemberService.java" beforeDir="false" afterPath="$PROJECT_DIR$/cloudChat/src/main/java/com/chatApp/cloudChat/service/ConversationMemberService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/cloudChat/src/main/java/com/chatApp/cloudChat/service/ConversationService.java" beforeDir="false" afterPath="$PROJECT_DIR$/cloudChat/src/main/java/com/chatApp/cloudChat/service/ConversationService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/cloudChat/src/main/java/com/chatApp/cloudChat/service/UserService.java" beforeDir="false" afterPath="$PROJECT_DIR$/cloudChat/src/main/java/com/chatApp/cloudChat/service/UserService.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -19,9 +31,10 @@
     <option name="RECENT_TEMPLATES">
       <list>
         <option value="Exception" />
-        <option value="Record" />
         <option value="Interface" />
+        <option value="Record" />
         <option value="Class" />
+        <option value="Enum" />
       </list>
     </option>
   </component>
@@ -90,7 +103,7 @@
       <option name="presentableId" value="Default" />
       <updated>1791474497114</updated>
       <workItem from="1791474499795" duration="2795000" />
-      <workItem from="1791539321757" duration="10642000" />
+      <workItem from="1791539321757" duration="25094000" />
     </task>
     <servers />
   </component>

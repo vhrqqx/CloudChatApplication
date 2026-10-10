@@ -10,8 +10,5 @@ import java.util.Optional;
 
 @Repository
 public interface UsersRepo extends JpaRepository<Users, Long> {
-    Users registerUser(Users user);
-
     public Users findByUserEmail(String email);
-    public Users updateUser(Long id, Users updatedUser);
 }

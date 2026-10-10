@@ -13,10 +13,10 @@ public class AttachmentService {
     public AttachmentService(AttachmentRepo attachmentRepo) {
         this.attachmentRepo = attachmentRepo;
     }
-    public Optional<Attachments> findByMessageId(Long id) {
+    public Optional<Attachments> findById(Long id) {
         return attachmentRepo.findByMessageId(id);
     }
-    public void deleteByMessageId(Long id) {
+    public void deleteById(Long id) {
         attachmentRepo.deleteById(id);
     }
 }

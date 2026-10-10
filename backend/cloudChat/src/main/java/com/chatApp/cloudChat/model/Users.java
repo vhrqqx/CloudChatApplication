@@ -1,30 +1,34 @@
 package com.chatApp.cloudChat.model;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 
 import java.time.LocalDateTime;
 import java.util.Objects;
 
 @Entity
+@Table(name = "users")
 public class Users {
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long userId;
     @Email
     private String userEmail;
     private String username;
-    private String passwordHashed;
+    private String password;
     private LocalDateTime createdAt;
+    @Enumerated(EnumType.STRING)
+    private UserStatus status;
 
     public Users() {}
 
-    public Users(Long userId, String userEmail, String username, String passwordHashed, LocalDateTime createdAt) {
+    public Users(Long userId, String userEmail, String username, String password, LocalDateTime createdAt, UserStatus status) {
         this.userId = userId;
         this.userEmail = userEmail;
         this.username = username;
-        this.passwordHashed = passwordHashed;
+        this.password = password;
         this.createdAt = createdAt;
+        this.status = status;
     }
 
     public Long getId() {
@@ -51,12 +55,12 @@ public class Users {
         this.username = username;
     }
 
-    public String getPasswordHashed() {
-        return passwordHashed;
+    public String getPassword() {
+        return password;
     }
 
-    public void setPasswordHashed(String passwordHashed) {
-        this.passwordHashed = passwordHashed;
+    public void setPassword(String password) {
+        this.password = password;
     }
 
     public LocalDateTime getCreatedAt() {
@@ -67,15 +71,23 @@ public class Users {
         this.createdAt = createdAt;
     }
 
+    public UserStatus getStatus() {
+        return status;
+    }
+
+    public void setStatus(UserStatus status) {
+        this.status = status;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (o == null || getClass() != o.getClass()) return false;
         Users users = (Users) o;
-        return Objects.equals(userId, users.userId) && Objects.equals(userEmail, users.userEmail) && Objects.equals(username, users.username) && Objects.equals(passwordHashed, users.passwordHashed) && Objects.equals(createdAt, users.createdAt);
+        return Objects.equals(userId, users.userId) && Objects.equals(userEmail, users.userEmail) && Objects.equals(username, users.username) && Objects.equals(password, users.password) && Objects.equals(createdAt, users.createdAt) && Objects.equals(status, users.status);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(userId, userEmail, username, passwordHashed, createdAt);
+        return Objects.hash(userId, userEmail, username, password, createdAt, status);
     }
 }

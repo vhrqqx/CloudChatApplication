@@ -1,6 +1,8 @@
 package com.chatApp.cloudChat.model;
 
 import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 
 import java.util.Objects;
@@ -8,7 +10,8 @@ import java.util.Objects;
 @Entity
 public class Attachments {
     @Id
-    private Long messageId;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
     private String filename;
     private Long size;
     private String contentType;
@@ -16,20 +19,20 @@ public class Attachments {
 
     public Attachments() {}
 
-    public Attachments(Long messageId, String filename, Long size, String contentType, String objectKey) {
-        this.messageId = messageId;
+    public Attachments(Long id, String filename, Long size, String contentType, String objectKey) {
+        this.id = id;
         this.filename = filename;
         this.size = size;
         this.contentType = contentType;
         this.objectKey = objectKey;
     }
 
-    public Long getMessage_id() {
-        return messageId;
+    public Long getId() {
+        return id;
     }
 
-    public void setMessage_id(Long messageId) {
-        this.messageId = messageId;
+    public void setId(Long id) {
+        this.id = id;
     }
 
     public String getFilename() {
@@ -68,11 +71,11 @@ public class Attachments {
     public boolean equals(Object o) {
         if (o == null || getClass() != o.getClass()) return false;
         Attachments that = (Attachments) o;
-        return Objects.equals(messageId, that.messageId) && Objects.equals(filename, that.filename) && Objects.equals(size, that.size) && Objects.equals(contentType, that.contentType) && Objects.equals(objectKey, that.objectKey);
+        return Objects.equals(id, that.id) && Objects.equals(filename, that.filename) && Objects.equals(size, that.size) && Objects.equals(contentType, that.contentType) && Objects.equals(objectKey, that.objectKey);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(messageId, filename, size, contentType, objectKey);
+        return Objects.hash(id, filename, size, contentType, objectKey);
     }
 }

@@ -4,6 +4,7 @@ import com.chatApp.cloudChat.model.ConversationMember;
 import com.chatApp.cloudChat.repository.ConversationMemberRepo;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -12,10 +13,13 @@ public class ConversationMemberService {
     public ConversationMemberService(ConversationMemberRepo conversationMemberRepo) {
         this.conversationMemberRepo = conversationMemberRepo;
     }
-    public Optional<ConversationMember> findByUserId(Long id) {
-        return conversationMemberRepo.findById(id);
+    public List<ConversationMember> findByUserId(Long userId) {
+        return conversationMemberRepo.findByUserId(userId);
     }
-    public void deleteByUserId(Long id) {
-        conversationMemberRepo.deleteById(id);
+    public List<ConversationMember> findByConversationId(Long conversationId) {
+        return conversationMemberRepo.findByConversationId(conversationId);
+    }
+    public void deleteById(Long userId) {
+        conversationMemberRepo.deleteByUserId(userId);
     }
 }

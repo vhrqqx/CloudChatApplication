@@ -9,6 +9,5 @@ import java.util.Optional;
 @Repository
 public interface MessagesRepo extends JpaRepository<Messages, Long> {
     public Optional<Messages> findByMessageId(Long id);
-    public Messages editMessage(Long messageId, Messages updatedMessage);
     public void deleteByMessageId(Long id);
 }
