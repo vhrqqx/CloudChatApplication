@@ -1,11 +1,10 @@
 package com.chatApp.cloudChat.repository;
 
-import com.chatApp.cloudChat.model.Conversations;
+import com.chatApp.cloudChat.model.Conversation;
+import com.chatApp.cloudChat.model.Message;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
-import java.util.Optional;
-
 @Repository
-public interface ConversationRepo extends JpaRepository<Conversations, Long> {
+public interface ConversationRepo extends JpaRepository<Conversation, Long> {
 }

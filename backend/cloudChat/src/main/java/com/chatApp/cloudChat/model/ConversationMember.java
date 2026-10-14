@@ -1,9 +1,6 @@
 package com.chatApp.cloudChat.model;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
 
 import java.util.Objects;
 
@@ -12,16 +9,21 @@ public class ConversationMember {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    private Long conversationId;
-    private Long userId;
-    private String role;
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "user_id")
+    private User user;
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "conversation_id")
+    private Conversation conversation;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private MemberRole role = MemberRole.MEMBER;
 
     public ConversationMember() {}
 
-    public ConversationMember(Long id, Long conversationId, Long userId, String role) {
-        this.id = id;
-        this.conversationId = conversationId;
-        this.userId = userId;
+    public ConversationMember(Conversation conversation, User user, MemberRole role) {
+        this.conversation = conversation;
+        this.user = user;
         this.role = role;
     }
 
@@ -33,39 +35,46 @@ public class ConversationMember {
         this.id = id;
     }
 
-    public Long getUserId() {
-        return userId;
-    }
-
-    public void setUserId(Long userId) {
-        this.userId = userId;
-    }
-
-    public String getRole() {
+    public MemberRole getRole() {
         return role;
     }
 
-    public void setRole(String role) {
+    public void setRole(MemberRole role) {
         this.role = role;
     }
 
-    public Long getConversationId() {
-        return conversationId;
+    public User getUser() {
+        return user;
     }
 
-    public void setConversationId(Long conversationId) {
-        this.conversationId = conversationId;
+    public void setUser(User user) {
+        this.user = user;
+    }
+
+    public Long getUserId() {
+        return user != null ? user.getUserId() : null;
+    }
+
+    public Conversation getConversation() {
+        return conversation;
+    }
+
+    public void setConversation(Conversation conversation) {
+        this.conversation = conversation;
+    }
+
+    public Long getConversationId() {
+        return conversation != null ? conversation.getConversationId() : null;
     }
 
     @Override
     public boolean equals(Object o) {
-        if (o == null || getClass() != o.getClass()) return false;
-        ConversationMember that = (ConversationMember) o;
-        return Objects.equals(id, that.id) && Objects.equals(userId, that.userId) && Objects.equals(role, that.role) && Objects.equals(conversationId, that.conversationId);
+        if (this == o) return true;
+        if (!(o instanceof ConversationMember other)) return false;
+        return id != null && id.equals(other.getId());
     }
-
     @Override
     public int hashCode() {
-        return Objects.hash(id, conversationId, userId, role);
+        return getClass().hashCode();
     }
 }

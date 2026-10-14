@@ -7,12 +7,18 @@
     <list default="true" id="15014cc0-a34c-430a-af8a-b3cf0db48a9c" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/cloudChat/.no-vibe/data/sessions/backend-setup.json" beforeDir="false" afterPath="$PROJECT_DIR$/cloudChat/.no-vibe/data/sessions/backend-setup.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/cloudChat/.no-vibe/session.md" beforeDir="false" afterPath="$PROJECT_DIR$/cloudChat/.no-vibe/session.md" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/cloudChat/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/cloudChat/pom.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/cloudChat/src/main/java/com/chatApp/cloudChat/model/Attachments.java" beforeDir="false" afterPath="$PROJECT_DIR$/cloudChat/src/main/java/com/chatApp/cloudChat/model/Attachments.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/cloudChat/src/main/java/com/chatApp/cloudChat/config/SecurityConfig.java" beforeDir="false" afterPath="$PROJECT_DIR$/cloudChat/src/main/java/com/chatApp/cloudChat/config/SecurityConfig.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/cloudChat/src/main/java/com/chatApp/cloudChat/controller/ConversationController.java" beforeDir="false" afterPath="$PROJECT_DIR$/cloudChat/src/main/java/com/chatApp/cloudChat/controller/ConversationController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/cloudChat/src/main/java/com/chatApp/cloudChat/controller/UserController.java" beforeDir="false" afterPath="$PROJECT_DIR$/cloudChat/src/main/java/com/chatApp/cloudChat/controller/UserController.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/cloudChat/src/main/java/com/chatApp/cloudChat/exception/GlobalHandleException.java" beforeDir="false" afterPath="$PROJECT_DIR$/cloudChat/src/main/java/com/chatApp/cloudChat/exception/GlobalHandleException.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/cloudChat/src/main/java/com/chatApp/cloudChat/model/Attachments.java" beforeDir="false" afterPath="$PROJECT_DIR$/cloudChat/src/main/java/com/chatApp/cloudChat/model/Attachment.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/cloudChat/src/main/java/com/chatApp/cloudChat/model/ConversationMember.java" beforeDir="false" afterPath="$PROJECT_DIR$/cloudChat/src/main/java/com/chatApp/cloudChat/model/ConversationMember.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/cloudChat/src/main/java/com/chatApp/cloudChat/model/Conversations.java" beforeDir="false" afterPath="$PROJECT_DIR$/cloudChat/src/main/java/com/chatApp/cloudChat/model/Conversations.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/cloudChat/src/main/java/com/chatApp/cloudChat/model/Messages.java" beforeDir="false" afterPath="$PROJECT_DIR$/cloudChat/src/main/java/com/chatApp/cloudChat/model/Messages.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/cloudChat/src/main/java/com/chatApp/cloudChat/model/Users.java" beforeDir="false" afterPath="$PROJECT_DIR$/cloudChat/src/main/java/com/chatApp/cloudChat/model/Users.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/cloudChat/src/main/java/com/chatApp/cloudChat/model/Conversations.java" beforeDir="false" afterPath="$PROJECT_DIR$/cloudChat/src/main/java/com/chatApp/cloudChat/model/Conversation.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/cloudChat/src/main/java/com/chatApp/cloudChat/model/Messages.java" beforeDir="false" afterPath="$PROJECT_DIR$/cloudChat/src/main/java/com/chatApp/cloudChat/model/Message.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/cloudChat/src/main/java/com/chatApp/cloudChat/model/Users.java" beforeDir="false" afterPath="$PROJECT_DIR$/cloudChat/src/main/java/com/chatApp/cloudChat/model/User.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/cloudChat/src/main/java/com/chatApp/cloudChat/repository/AttachmentRepo.java" beforeDir="false" afterPath="$PROJECT_DIR$/cloudChat/src/main/java/com/chatApp/cloudChat/repository/AttachmentRepo.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/cloudChat/src/main/java/com/chatApp/cloudChat/repository/ConversationMemberRepo.java" beforeDir="false" afterPath="$PROJECT_DIR$/cloudChat/src/main/java/com/chatApp/cloudChat/repository/ConversationMemberRepo.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/cloudChat/src/main/java/com/chatApp/cloudChat/repository/ConversationRepo.java" beforeDir="false" afterPath="$PROJECT_DIR$/cloudChat/src/main/java/com/chatApp/cloudChat/repository/ConversationRepo.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/cloudChat/src/main/java/com/chatApp/cloudChat/repository/MessagesRepo.java" beforeDir="false" afterPath="$PROJECT_DIR$/cloudChat/src/main/java/com/chatApp/cloudChat/repository/MessagesRepo.java" afterDir="false" />
@@ -20,6 +26,7 @@
       <change beforePath="$PROJECT_DIR$/cloudChat/src/main/java/com/chatApp/cloudChat/service/AttachmentService.java" beforeDir="false" afterPath="$PROJECT_DIR$/cloudChat/src/main/java/com/chatApp/cloudChat/service/AttachmentService.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/cloudChat/src/main/java/com/chatApp/cloudChat/service/ConversationMemberService.java" beforeDir="false" afterPath="$PROJECT_DIR$/cloudChat/src/main/java/com/chatApp/cloudChat/service/ConversationMemberService.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/cloudChat/src/main/java/com/chatApp/cloudChat/service/ConversationService.java" beforeDir="false" afterPath="$PROJECT_DIR$/cloudChat/src/main/java/com/chatApp/cloudChat/service/ConversationService.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/cloudChat/src/main/java/com/chatApp/cloudChat/service/MessageService.java" beforeDir="false" afterPath="$PROJECT_DIR$/cloudChat/src/main/java/com/chatApp/cloudChat/service/MessageService.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/cloudChat/src/main/java/com/chatApp/cloudChat/service/UserService.java" beforeDir="false" afterPath="$PROJECT_DIR$/cloudChat/src/main/java/com/chatApp/cloudChat/service/UserService.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -27,14 +34,17 @@
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
+  <component name="EmbeddingIndexingInfo">
+    <option name="cachedIndexableFilesCount" value="79" />
+  </component>
   <component name="FileTemplateManagerImpl">
     <option name="RECENT_TEMPLATES">
       <list>
-        <option value="Exception" />
         <option value="Interface" />
-        <option value="Record" />
-        <option value="Class" />
         <option value="Enum" />
+        <option value="Record" />
+        <option value="Exception" />
+        <option value="Class" />
       </list>
     </option>
   </component>
@@ -48,6 +58,10 @@
       </MavenGeneralSettings>
     </option>
   </component>
+  <component name="McpProjectServerCommands">
+    <commands />
+    <urls />
+  </component>
   <component name="ProjectColorInfo">{
   &quot;customColor&quot;: &quot;&quot;,
   &quot;associatedIndex&quot;: 7
@@ -60,33 +74,39 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
-    &quot;RequestMappingsPanelOrder0&quot;: &quot;0&quot;,
-    &quot;RequestMappingsPanelOrder1&quot;: &quot;1&quot;,
-    &quot;RequestMappingsPanelWidth0&quot;: &quot;75&quot;,
-    &quot;RequestMappingsPanelWidth1&quot;: &quot;75&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.typescript.service.memoryLimit.init&quot;: &quot;true&quot;,
-    &quot;SHARE_PROJECT_CONFIGURATION_FILES&quot;: &quot;true&quot;,
-    &quot;Spring Boot.CloudChatApplication.executor&quot;: &quot;Run&quot;,
-    &quot;codeWithMe.voiceChat.enabledByDefault&quot;: &quot;false&quot;,
-    &quot;com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1&quot;: &quot;true&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;main&quot;,
-    &quot;junie.onboarding.icon.badge.shown&quot;: &quot;true&quot;,
-    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
-    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
-    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
-    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
-    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
-    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
-    &quot;to.speed.mode.migration.done&quot;: &quot;true&quot;,
-    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "JavaScript Debug.graph.html.executor": "Run",
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "RequestMappingsPanelOrder0": "0",
+    "RequestMappingsPanelOrder1": "1",
+    "RequestMappingsPanelWidth0": "75",
+    "RequestMappingsPanelWidth1": "75",
+    "RunOnceActivity.MCP Project settings loaded": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "RunOnceActivity.typescript.service.memoryLimit.init": "true",
+    "SHARE_PROJECT_CONFIGURATION_FILES": "true",
+    "Spring Boot.CloudChatApplication.executor": "Run",
+    "codeWithMe.voiceChat.enabledByDefault": "false",
+    "com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1": "true",
+    "git-widget-placeholder": "main",
+    "junie.onboarding.icon.badge.shown": "true",
+    "kotlin-language-version-configured": "true",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "settings.editor.selected.configurable": "ml.llm.AcpAgentsConfigurable",
+    "to.speed.mode.migration.done": "true",
+    "vue.rearranger.settings.migration": "true"
   }
-}</component>
-  <component name="RunManager">
+}]]></component>
+  <component name="RunManager" selected="JavaScript Debug.graph.html">
+    <configuration name="graph.html" type="JavascriptDebugType" temporary="true" nameIsGenerated="true" uri="http://localhost:63342/backend/cloudChat/graphify-out/graph.html" useBuiltInWebServerPort="true">
+      <method v="2" />
+    </configuration>
     <configuration name="CloudChatApplication" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot" nameIsGenerated="true">
       <module name="cloudChat" />
       <option name="SPRING_BOOT_MAIN_CLASS" value="com.chatApp.cloudChat.CloudChatApplication" />
@@ -94,6 +114,11 @@
         <option name="Make" enabled="true" />
       </method>
     </configuration>
+    <recent_temporary>
+      <list>
+        <item itemvalue="JavaScript Debug.graph.html" />
+      </list>
+    </recent_temporary>
   </component>
   <component name="TaskManager">
     <task active="true" id="Default" summary="Default task">
@@ -103,7 +128,8 @@
       <option name="presentableId" value="Default" />
       <updated>1791474497114</updated>
       <workItem from="1791474499795" duration="2795000" />
-      <workItem from="1791539321757" duration="25094000" />
+      <workItem from="1791539321757" duration="44928000" />
+      <workItem from="1791733726876" duration="24395000" />
     </task>
     <servers />
   </component>
@@ -118,5 +144,9 @@
     <option featureType="dependencySupport" implementationName="java:org.hibernate.validator:hibernate-validator" />
     <option featureType="dependencySupport" implementationName="java:org.springframework.boot:spring-boot" />
     <option featureType="dependencySupport" implementationName="java:org.springframework:spring-webmvc" />
+  </component>
+  <component name="XSLT-Support.FileAssociations.UIState">
+    <expand />
+    <select />
   </component>
 </project>

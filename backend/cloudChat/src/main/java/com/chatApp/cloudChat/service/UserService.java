@@ -1,18 +1,25 @@
 package com.chatApp.cloudChat.service;
 
-import com.chatApp.cloudChat.model.Users;
-import com.chatApp.cloudChat.repository.UsersRepo;
-import org.jspecify.annotations.NullMarked;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import java.util.Optional;
+
+import com.chatApp.cloudChat.model.ConversationMember;
+import com.chatApp.cloudChat.repository.ConversationMemberRepo;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
-import java.util.Optional;
+import com.chatApp.cloudChat.DTO.RegisterRequest;
+import com.chatApp.cloudChat.DTO.UpdateUserRequest;
+import com.chatApp.cloudChat.DTO.UserResponse;
+import com.chatApp.cloudChat.exception.EmailAlreadyInUseException;
+import com.chatApp.cloudChat.exception.UserNotFound;
+import com.chatApp.cloudChat.model.User;
+import com.chatApp.cloudChat.repository.UsersRepo;
 
 @Service
 public class UserService {
-    // Constructor Injection
     private final UsersRepo usersRepo;
     private final PasswordEncoder passwordEncoder;
 
@@ -20,33 +27,34 @@ public class UserService {
         this.usersRepo = usersRepo;
         this.passwordEncoder = passwordEncoder;
     }
-
-    public Users registerUser(Users user) {
-        String hashedPassword = passwordEncoder.encode(user.getPassword());
-        user.setPassword(hashedPassword);
-        return usersRepo.save(user);
+    @Transactional
+    public UserResponse registerUser(RegisterRequest request) {
+        String email = request.userEmail().trim().toLowerCase();
+        if (usersRepo.existsByUserEmail(email)) throw new EmailAlreadyInUseException("Email đã được sử dụng!");
+        User user = new User(request.username(), email, passwordEncoder.encode(request.password()));
+        return UserResponse.from(usersRepo.save(user));
     }
-    public Users findByUserEmail(String email) {
+    @Transactional(readOnly = true)
+    public Optional<User> findByUserEmail(String email) {
         return usersRepo.findByUserEmail(email);
     }
-    public Optional<Users> findByUserId(Long id) {
-        return usersRepo.findById(id);
+    @Transactional(readOnly = true)
+    public UserResponse findByUserId(Long id) {
+        return usersRepo.findById(id).map(UserResponse::from).orElseThrow(() -> new UserNotFound("Không tìm thấy người dùng với mã "+ id));
     }
+    @Transactional
+    public UserResponse updateUsername(Long id, UpdateUserRequest request) {
+        User user = usersRepo.findById(id).orElseThrow(() -> new UserNotFound("Không tìm thấy người dùng với mã "+ id));
+        user.setUsername(request.username());
+        return UserResponse.from(user);
+    }
+    @Transactional
     public void deleteByUserId(Long id) {
+        if (!usersRepo.existsById(id)) throw new UserNotFound("Không tìm thấy người dùng với mã "+ id);
         usersRepo.deleteById(id);
     }
-    public Users updateUser(Long id, Users updatedUser) {
-        updatedUser.setId(id);
-        return usersRepo.save(updatedUser);
-    }
-    public List<Users> getAllUsers() {
-        return usersRepo.findAll();
-    }
-    public boolean verifyLogin(String email, String rawPassword) {
-        Users existingUser = usersRepo.findByUserEmail(email);
-        if (existingUser == null) {
-            return false;
-        }
-        return passwordEncoder.matches(rawPassword, existingUser.getPassword());
+    @Transactional(readOnly = true)
+    public Page<UserResponse> getAll(Pageable pageable) {
+        return usersRepo.findAll(pageable).map(UserResponse::from);
     }
 }

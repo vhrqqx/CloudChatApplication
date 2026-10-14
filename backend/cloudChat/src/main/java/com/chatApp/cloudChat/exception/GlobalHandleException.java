@@ -4,9 +4,11 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import com.chatApp.cloudChat.DTO.ErrorResponse;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import java.time.LocalDateTime;
 
+@RestControllerAdvice
 public class GlobalHandleException {
     @ExceptionHandler(UserNotFound.class)
     public ResponseEntity<ErrorResponse> handleUserNotFound(UserNotFound ex) {
