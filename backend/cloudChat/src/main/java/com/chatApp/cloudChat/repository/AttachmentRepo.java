@@ -8,7 +8,7 @@ import java.util.Optional;
 
 @Repository
 public interface AttachmentRepo extends JpaRepository<Attachment, Long> {
-    Optional<Attachment> findByMessageId(Long id);
-    void deleteByMessageId(Long id);
-    boolean existsByMessageId(Long id);
+    Optional<Attachment> findByAttachmentId(Long id);
+    void deleteByAttachmentId(Long id);
+    boolean existsByAttachmentId(Long id);
 }

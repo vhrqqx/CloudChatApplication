@@ -1,15 +1,11 @@
 package com.chatApp.cloudChat.service;
 
 import com.chatApp.cloudChat.DTO.AttachmentResponse;
-import com.chatApp.cloudChat.DTO.SendAttachmentRequest;
 import com.chatApp.cloudChat.exception.AttachmentNotFoundException;
 import com.chatApp.cloudChat.exception.ConversationNotFoundException;
 import com.chatApp.cloudChat.exception.ExceededFileSizeException;
 import com.chatApp.cloudChat.exception.UserNotFound;
-import com.chatApp.cloudChat.model.Attachment;
-import com.chatApp.cloudChat.model.Conversation;
-import com.chatApp.cloudChat.model.Message;
-import com.chatApp.cloudChat.model.User;
+import com.chatApp.cloudChat.model.*;
 import com.chatApp.cloudChat.repository.AttachmentRepo;
 import com.chatApp.cloudChat.repository.ConversationRepo;
 import com.chatApp.cloudChat.repository.MessagesRepo;
@@ -21,13 +17,12 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Optional;
 import java.util.Set;
-import java.util.UUID;
 
 
 @Service
@@ -63,8 +58,11 @@ public class AttachmentService {
         this.messagesRepo = messagesRepo;
     }
     @Transactional(readOnly = true)
-    public AttachmentResponse findByMessageId(Long id) {
-        return attachmentRepo.findByMessageId(id).map(AttachmentResponse::from).orElseThrow(() -> new AttachmentNotFoundException("Không tìm thấy tệp với mã " + id));
+    public AttachmentResponse findByMessageId(Long id, Long userId) {
+        Attachment attachment = attachmentRepo.findByAttachmentId(id).orElseThrow(() -> new AttachmentNotFoundException("Không tìm thấy tệp với mã " + id));
+        Long conversationId = attachment.getMessage().getConversationId();
+        if (!memberService.isAdmin(conversationId, userId)) throw new IllegalArgumentException("Bạn không có quyền làm việc này!");
+        return AttachmentResponse.from(attachment);
     }
     @Transactional
     public AttachmentResponse sendAttachment(Long conversationId, Long senderId, MultipartFile file) {
@@ -74,18 +72,24 @@ public class AttachmentService {
         // Sử dụng Tika để trích xuất content type của file có an toàn hay không
         String originalFileName = file.getOriginalFilename() != null ? file.getOriginalFilename() : "unknown";
         String detectedContentType = detectAndValidateMimeType(file, originalFileName);
-        String objectKey = "attachments/" + UUID.randomUUID() + "_" + originalFileName;
+        String objectKey = StringUtils.cleanPath(originalFileName).replaceAll("[^a-zA-z0-9._-]", "_");
         Conversation conversation = conversationRepo.findById(conversationId).orElseThrow(() -> new ConversationNotFoundException("Không tìm thấy cuộc hội thoại" + conversationId));
         User sender = usersRepo.findById(senderId).orElseThrow(() -> new UserNotFound("Không tìm thấy người dùng " + senderId));
-        Message message = new Message(conversation, sender, "[File:" + originalFileName + "]");
+        // Tạo message và Attachment mới
+        Message message = new Message(conversation, sender, "[File:" + originalFileName + "]", MessageType.ATTACHMENT);
         Message savedMessage = messagesRepo.save(message);
         Attachment attachment = new Attachment(savedMessage, originalFileName, file.getSize(), detectedContentType, objectKey);
+        attachmentRepo.save(attachment);
         return AttachmentResponse.from(attachment);
     }
     @Transactional
-    public void deleteById(Long id) {
-        if (!attachmentRepo.existsByMessageId(id)) throw new AttachmentNotFoundException("Không tìm thấy tệp với mã " + id);
-        attachmentRepo.deleteById(id);
+    public void deleteById(Long id, Long conversationId, Long currentUserId) {
+        Attachment attachment = attachmentRepo.findByAttachmentId(id).orElseThrow(() -> new AttachmentNotFoundException("Không tìm thấy tệp " + id));
+        Message message = attachment.getMessage();
+        boolean isMember = message.getSenderId().equals(currentUserId);
+        boolean isAdmin = memberService.isAdmin(conversationId, currentUserId);
+        if (!isAdmin || !isMember) throw new IllegalArgumentException("Bạn không có quyền làm điều này!");
+        attachmentRepo.delete(attachment);
     }
     @Transactional(readOnly = true)
     public Page<AttachmentResponse> getAll(Pageable pageable) {

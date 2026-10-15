@@ -5,6 +5,7 @@ import jakarta.validation.constraints.Email;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.Instant;
+import java.util.UUID;
 
 @Entity
 @Table(name = "users")
@@ -19,6 +20,9 @@ public class User {
     private String username;
     @Column(nullable = false)
     private String password;
+    @Column(nullable = false)
+    private boolean isDeleted = false;
+    private Instant deletedAt;
     @CreationTimestamp
     @Column(nullable = false, updatable = false)
     private Instant createdAt;
@@ -32,6 +36,18 @@ public class User {
         this.username = username;
         this.userEmail = userEmail;
         this.password = password;
+    }
+
+    public void markAsDeleted() {
+        this.isDeleted = true;
+        this.deletedAt = Instant.now();
+        this.username = "Unknown User";
+        this.userEmail = "deleted_" + this.id + "_" + UUID.randomUUID().toString().substring(0, 8) + "_" + this.userEmail;
+        this.password = "";
+    }
+
+    public boolean isDeleted() {
+        return isDeleted;
     }
 
     public Long getUserId() {

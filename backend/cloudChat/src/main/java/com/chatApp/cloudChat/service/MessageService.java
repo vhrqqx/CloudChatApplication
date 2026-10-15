@@ -4,8 +4,8 @@ import com.chatApp.cloudChat.DTO.SendMessageRequest;
 import com.chatApp.cloudChat.exception.ConversationNotFoundException;
 import com.chatApp.cloudChat.exception.UserNotFound;
 import com.chatApp.cloudChat.model.Conversation;
+import com.chatApp.cloudChat.model.MessageType;
 import com.chatApp.cloudChat.model.User;
-import com.chatApp.cloudChat.repository.ConversationMemberRepo;
 import com.chatApp.cloudChat.repository.ConversationRepo;
 import com.chatApp.cloudChat.repository.UsersRepo;
 import org.springframework.data.domain.Page;
@@ -33,7 +33,8 @@ public class MessageService {
         this.usersRepo = usersRepo;
     }
     @Transactional(readOnly = true)
-    public MessageResponse findByMessageId(Long id) {
+    public MessageResponse findByMessageId(Long id, Long conversationId, Long userId) {
+        if (conversationMemberService.isMember(conversationId, userId)) throw new IllegalArgumentException("Bạn không có quyền làm việc này!");
         return messagesRepo.findById(id).map(MessageResponse::from).orElseThrow(() -> new MessageNotFoundException("Không tìm thấy tin nhắn với mã "+ id));
     }
     @Transactional
@@ -41,15 +42,16 @@ public class MessageService {
         Conversation conversation = conversationRepo.findById(conversationId).orElseThrow(() -> new ConversationNotFoundException("Không tìm thấy cuộc hội thoại " + conversationId));
         User sender = usersRepo.findById(senderId).orElseThrow(() -> new UserNotFound("Không tìm thấy người dùng + " + senderId));
         if (!conversationMemberService.isMember(conversationId, senderId)) throw new IllegalArgumentException("Bạn không phải là thành viên của cuộc trò chuyện này!");
-        Message message = new Message(conversation, sender, request.messageContent());
+        Message message = new Message(conversation, sender, request.messageContent(), MessageType.TEXT);
         return MessageResponse.from(messagesRepo.save(message));
     }
     @Transactional
     public MessageResponse editMessage(Long messageId, Long currentUserId, UpdateMessageRequest request) {
-        Message newMsg = messagesRepo.findById(messageId).orElseThrow(() -> new MessageNotFoundException("Không tìm thấy tin nhắn với mã" + messageId));
-        if (!newMsg.getSenderId().equals(currentUserId)) throw new IllegalArgumentException("Bạn chỉ có thể sửa tin nhắn của chính mình!");
-        newMsg.setContent(request.content());
-        return MessageResponse.from(newMsg);
+        Message message = messagesRepo.findById(messageId).orElseThrow(() -> new MessageNotFoundException("Không tìm thấy tin nhắn với mã" + messageId));
+        if (message.getMessageType() == MessageType.ATTACHMENT) throw new IllegalArgumentException("Bạn không thể chỉnh sửa tin nhắn đính kèm tệp");
+        if (!message.getSenderId().equals(currentUserId)) throw new IllegalArgumentException("Bạn chỉ có thể sửa tin nhắn của chính mình!");
+        message.setContent(request.content());
+        return MessageResponse.from(message);
     }
     @Transactional
     public void deleteByMessageId(Long messageId, Long currentUserId) {

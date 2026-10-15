@@ -31,13 +31,17 @@ public class Message {
     @CreationTimestamp
     @Column(nullable = false, updatable = false)
     private Instant createdAt;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private MessageType messageType;
 
     protected Message() {}
 
-    public Message(Conversation conversation, User sender, String content) {
+    public Message(Conversation conversation, User sender, String content, MessageType messageType) {
         this.conversation = conversation;
         this.sender = sender;
         this.content = content;
+        this.messageType = messageType;
     }
 
     public void addAttachment(Attachment attachment) {
@@ -98,6 +102,14 @@ public class Message {
 
     public void setCreatedAt(Instant createdAt) {
         this.createdAt = createdAt;
+    }
+
+    public MessageType getMessageType() {
+        return messageType;
+    }
+
+    public void setMessageType(MessageType messageType) {
+        this.messageType = messageType;
     }
 
     @Override

@@ -5,5 +5,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
-public record CreateConversationRequest(@NotNull ConversationType conversationType) {}
+import java.util.Set;
+
+public record CreateConversationRequest(@NotNull ConversationType conversationType, @NotNull Set<Long> memberId) {}
 

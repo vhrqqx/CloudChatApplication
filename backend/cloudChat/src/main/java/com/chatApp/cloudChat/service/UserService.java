@@ -2,8 +2,8 @@ package com.chatApp.cloudChat.service;
 
 import java.util.Optional;
 
-import com.chatApp.cloudChat.model.ConversationMember;
-import com.chatApp.cloudChat.repository.ConversationMemberRepo;
+import com.chatApp.cloudChat.DTO.UpdatePasswordRequest;
+import com.chatApp.cloudChat.exception.InvalidCurrentPasswordException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -30,13 +30,13 @@ public class UserService {
     @Transactional
     public UserResponse registerUser(RegisterRequest request) {
         String email = request.userEmail().trim().toLowerCase();
-        if (usersRepo.existsByUserEmail(email)) throw new EmailAlreadyInUseException("Email đã được sử dụng!");
+        if (usersRepo.existsByUserEmailAndIsDeletedFalse(email)) throw new EmailAlreadyInUseException("Email đã được sử dụng!");
         User user = new User(request.username(), email, passwordEncoder.encode(request.password()));
         return UserResponse.from(usersRepo.save(user));
     }
     @Transactional(readOnly = true)
     public Optional<User> findByUserEmail(String email) {
-        return usersRepo.findByUserEmail(email);
+        return usersRepo.findByUserEmailAndIsDeletedFalse(email.trim().toLowerCase());
     }
     @Transactional(readOnly = true)
     public UserResponse findByUserId(Long id) {
@@ -49,12 +49,19 @@ public class UserService {
         return UserResponse.from(user);
     }
     @Transactional
+    public void updatePassword(UpdatePasswordRequest request, Long userId) {
+        User user = usersRepo.findById(userId).orElseThrow(() -> new UserNotFound("Không tìm thấy người dùng " + userId));
+        if (!passwordEncoder.matches(request.currentPassword(), user.getPassword())) throw new InvalidCurrentPasswordException("Mật khẩu hiện tại không đúng!");
+        user.setPassword(passwordEncoder.encode(request.newPassword()));
+    }
+    @Transactional
     public void deleteByUserId(Long id) {
-        if (!usersRepo.existsById(id)) throw new UserNotFound("Không tìm thấy người dùng với mã "+ id);
-        usersRepo.deleteById(id);
+        User user = usersRepo.findById(id).orElseThrow(() -> new UserNotFound("Không tìm thấy người dùng " + id));
+        if (user.isDeleted()) throw new UserNotFound("Người dùng đã bị xóa trước đấy!");
+        user.markAsDeleted();
     }
     @Transactional(readOnly = true)
     public Page<UserResponse> getAll(Pageable pageable) {
-        return usersRepo.findAll(pageable).map(UserResponse::from);
+        return usersRepo.findAllByIsDeletedFalse(pageable).map(UserResponse::from);
     }
 }

@@ -49,6 +49,8 @@ public class ConversationMemberService {
         User targetUser = usersRepo.findById(request.userId())
                 .orElseThrow(() -> new UserNotFound("Không tìm thấy người dùng với mã " + request.userId()));
 
+        if (targetUser.isDeleted()) throw new IllegalArgumentException("Tài khoản này đã bị xóa.");
+
         if (isMember(conversationId, request.userId())) {
             throw new IllegalArgumentException("Người dùng đã là thành viên của cuộc trò chuyện");
         }
@@ -78,6 +80,8 @@ public class ConversationMemberService {
     public void leaveConversation(Long conversationId, Long userId) {
         ConversationMember leavingMember = conversationMemberRepo.findByConversationIdAndUserId(conversationId, userId)
                 .orElseThrow(() -> new MemberNotFoundException("Không tìm thấy thành viên trong cuộc trò chuyện"));
+
+        if(leavingMember.getConversation().getConvoType() == ConversationType.DIRECT) throw new IllegalArgumentException("Bạn không thể rời chat trong cuộc trò chuyện direct");
 
         List<ConversationMember> allMembers = conversationMemberRepo.findByConversationId(conversationId);
 
@@ -117,10 +121,7 @@ public class ConversationMemberService {
 
         targetMember.setRole(newRole);
         ConversationMember saved = conversationMemberRepo.save(targetMember);
-
-        User targetUser = usersRepo.findById(targetUserId).orElseThrow(() -> new UserNotFound("Không tìm thấy người dùng với mã " + targetUserId));
-
-        return new MemberResponse(saved.getUserId(), targetUser.getUsername(), saved.getRole());
+        return new MemberResponse(saved.getUserId(), saved.getUser().getUsername(), saved.getRole());
     }
 
     // Tìm kiếm thành viên và cuộc trò chuyện
@@ -144,20 +145,12 @@ public class ConversationMemberService {
 
     // Kiểm tra quyền thành viên
     @Transactional(readOnly = true)
-    public boolean isMember(Long conversationId, Long userId) {
-        return conversationMemberRepo.existsByConversationIdAndUserId(conversationId, userId);
+    public boolean isMember(Long conversationId, Long currentUserId) {
+        return conversationMemberRepo.existsByConversationIdAndUserId(conversationId, currentUserId);
     }
 
     @Transactional(readOnly = true)
     public boolean isAdmin(Long conversationId, Long userId) {
         return conversationMemberRepo.existsByConversationIdAndUserIdAndRole(conversationId, userId, MemberRole.ADMIN);
-    }
-
-    @Transactional
-    public void deleteByUserId(Long userId) {
-        if (!conversationMemberRepo.existsByUserId(userId)) {
-            throw new MemberNotFoundException("Không tìm thấy thành viên trong cuộc trò chuyện");
-        }
-        conversationMemberRepo.deleteById(userId);
     }
 }
