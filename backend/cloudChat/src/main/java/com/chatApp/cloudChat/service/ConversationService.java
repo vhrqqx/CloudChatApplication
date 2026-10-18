@@ -3,7 +3,8 @@ package com.chatApp.cloudChat.service;
 import com.chatApp.cloudChat.DTO.ConversationResponse;
 import com.chatApp.cloudChat.DTO.CreateConversationRequest;
 import com.chatApp.cloudChat.exception.ConversationNotFoundException;
-import com.chatApp.cloudChat.exception.UserNotFound;
+import com.chatApp.cloudChat.exception.UserNotFoundException;
+import org.springframework.security.access.AccessDeniedException;
 import com.chatApp.cloudChat.model.*;
 import com.chatApp.cloudChat.repository.ConversationMemberRepo;
 import com.chatApp.cloudChat.repository.ConversationRepo;
@@ -32,7 +33,7 @@ public class ConversationService {
     }
     @Transactional
     public ConversationResponse createConversation(CreateConversationRequest request, Long creatorId) {
-        User creator = usersRepo.findById(creatorId).orElseThrow(() -> new UserNotFound("Không tìm thấy creator " + creatorId));
+        User creator = usersRepo.findById(creatorId).orElseThrow(() -> new UserNotFoundException("Không tìm thấy creator " + creatorId));
         //Chuẩn hóa danh sách thành viên thêm vào nhóm
         Set<Long> otherUserIds = new HashSet<>();
         if (request.memberId() != null) {
@@ -52,7 +53,7 @@ public class ConversationService {
         if (!otherUserIds.isEmpty()) {
             List<User> otherUsers = usersRepo.findAllById(otherUserIds);
             if (otherUsers.size() != otherUserIds.size()) {
-                throw new UserNotFound("Một hoặc nhiều người dùng đang được thêm không tồn tại!");
+                throw new UserNotFoundException("Một hoặc nhiều người dùng đang được thêm không tồn tại!");
             }
             for (User targetUsers : otherUsers) {
                 membersToSave.add(new ConversationMember(savedConversation, targetUsers, MemberRole.MEMBER));
@@ -66,9 +67,10 @@ public class ConversationService {
         return conversationRepo.findById(id).map(ConversationResponse::from).orElseThrow(() -> new ConversationNotFoundException("Không tìm thấy cuộc trò chuyện với mã " + id));
     }
     @Transactional
-    public void deleteByConversationId(Long id, Long currentUserId) throws IllegalAccessException {
-        if (!memberService.isAdmin(id, currentUserId)) throw new IllegalAccessException("Bạn không có quyền làm việc này!");
+    public void deleteByConversationId(Long id, Long currentUserId) {
         if (!conversationRepo.existsById(id)) throw new ConversationNotFoundException("Không tìm thấy cuộc trò chuyện với mã " + id);
+        if (!memberService.isAdmin(id, currentUserId)) throw new AccessDeniedException("Bạn không có quyền làm việc này!");
+        conversationMemberRepo.deleteByConversaion_Id(id);
         conversationRepo.deleteById(id);
     }
     @Transactional(readOnly = true)

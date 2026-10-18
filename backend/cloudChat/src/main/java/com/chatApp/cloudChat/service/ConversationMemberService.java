@@ -4,7 +4,7 @@ import com.chatApp.cloudChat.DTO.AddMemberRequest;
 import com.chatApp.cloudChat.DTO.MemberResponse;
 import com.chatApp.cloudChat.exception.ConversationNotFoundException;
 import com.chatApp.cloudChat.exception.MemberNotFoundException;
-import com.chatApp.cloudChat.exception.UserNotFound;
+import com.chatApp.cloudChat.exception.UserNotFoundException;
 import com.chatApp.cloudChat.model.Conversation;
 import com.chatApp.cloudChat.model.ConversationMember;
 import com.chatApp.cloudChat.model.ConversationType;
@@ -47,7 +47,7 @@ public class ConversationMemberService {
         }
 
         User targetUser = usersRepo.findById(request.userId())
-                .orElseThrow(() -> new UserNotFound("Không tìm thấy người dùng với mã " + request.userId()));
+                .orElseThrow(() -> new UserNotFoundException("Không tìm thấy người dùng với mã " + request.userId()));
 
         if (targetUser.isDeleted()) throw new IllegalArgumentException("Tài khoản này đã bị xóa.");
 
@@ -70,7 +70,7 @@ public class ConversationMemberService {
             throw new IllegalArgumentException("Không thể tự xóa chính mình khỏi nhóm, vui lòng dùng chức năng rời nhóm");
         }
 
-        ConversationMember member = conversationMemberRepo.findByConversationIdAndUserId(conversationId, targetUserId)
+        ConversationMember member = conversationMemberRepo.findByConversation_IdAndUser_Id(conversationId, targetUserId)
                 .orElseThrow(() -> new MemberNotFoundException("Không tìm thấy thành viên trong cuộc trò chuyện"));
 
         conversationMemberRepo.delete(member);
@@ -78,20 +78,18 @@ public class ConversationMemberService {
 
     @Transactional
     public void leaveConversation(Long conversationId, Long userId) {
-        ConversationMember leavingMember = conversationMemberRepo.findByConversationIdAndUserId(conversationId, userId)
-                .orElseThrow(() -> new MemberNotFoundException("Không tìm thấy thành viên trong cuộc trò chuyện"));
+        ConversationMember leavingMember = conversationMemberRepo.findByConversation_IdAndUser_Id(conversationId, userId).orElseThrow(() -> new MemberNotFoundException("Không tìm thấy thành viên trong cuộc trò chuyện"));
 
         if(leavingMember.getConversation().getConvoType() == ConversationType.DIRECT) throw new IllegalArgumentException("Bạn không thể rời chat trong cuộc trò chuyện direct");
 
-        List<ConversationMember> allMembers = conversationMemberRepo.findByConversationId(conversationId);
+        List<ConversationMember> allMembers = conversationMemberRepo.findByConversation_Id(conversationId);
 
         conversationMemberRepo.delete(leavingMember);
 
         if (allMembers.size() <= 1) {
             conversationRepo.deleteById(conversationId);
         } else if (leavingMember.getRole() == MemberRole.ADMIN) {
-            boolean hasOtherAdmin = allMembers.stream()
-                    .anyMatch(m -> !m.getUserId().equals(userId) && m.getRole() == MemberRole.ADMIN);
+            boolean hasOtherAdmin = allMembers.stream().anyMatch(m -> !m.getUserId().equals(userId) && m.getRole() == MemberRole.ADMIN);
 
             if (!hasOtherAdmin) {
                 ConversationMember nextAdmin = allMembers.stream().filter(m -> !m.getUserId().equals(userId)).findFirst().orElse(null);
@@ -110,10 +108,10 @@ public class ConversationMemberService {
             throw new IllegalArgumentException("Chỉ quản trị viên mới có quyền thay đổi vai trò của thành viên");
         }
 
-        ConversationMember targetMember = conversationMemberRepo.findByConversationIdAndUserId(conversationId, targetUserId).orElseThrow(() -> new MemberNotFoundException("Không tìm thấy thành viên trong cuộc trò chuyện"));
+        ConversationMember targetMember = conversationMemberRepo.findByConversation_IdAndUser_Id(conversationId, targetUserId).orElseThrow(() -> new MemberNotFoundException("Không tìm thấy thành viên trong cuộc trò chuyện"));
 
         if (currentUserId.equals(targetUserId) && newRole != MemberRole.ADMIN) {
-            long adminCount = conversationMemberRepo.countByConversationIdAndRole(conversationId, MemberRole.ADMIN);
+            long adminCount = conversationMemberRepo.countByConversation_IdAndRole(conversationId, MemberRole.ADMIN);
             if (adminCount <= 1) {
                 throw new IllegalStateException("Không thể hạ quyền của quản trị viên duy nhất trong nhóm");
             }
@@ -131,7 +129,7 @@ public class ConversationMemberService {
             throw new IllegalArgumentException("Bạn không phải là thành viên của cuộc trò chuyện này");
         }
 
-        List<ConversationMember> members = conversationMemberRepo.findByConversationId(conversationId);
+        List<ConversationMember> members = conversationMemberRepo.findByConversation_Id(conversationId);
         List<Long> userIds = members.stream().map(ConversationMember::getUserId).toList();
         Map<Long, String> usernames = usersRepo.findAllById(userIds).stream().collect(Collectors.toMap(User::getUserId, User::getUsername));
 
@@ -140,17 +138,17 @@ public class ConversationMemberService {
 
     @Transactional(readOnly = true)
     public List<Long> getConversationIdsByUserId(Long userId) {
-        return conversationMemberRepo.findByUserId(userId).stream().map(ConversationMember::getConversationId).toList();
+        return conversationMemberRepo.findByUser_Id(userId).stream().map(ConversationMember::getConversationId).toList();
     }
 
     // Kiểm tra quyền thành viên
     @Transactional(readOnly = true)
     public boolean isMember(Long conversationId, Long currentUserId) {
-        return conversationMemberRepo.existsByConversationIdAndUserId(conversationId, currentUserId);
+        return conversationMemberRepo.existsByConversation_IdAndUser_Id(conversationId, currentUserId);
     }
 
     @Transactional(readOnly = true)
     public boolean isAdmin(Long conversationId, Long userId) {
-        return conversationMemberRepo.existsByConversationIdAndUserIdAndRole(conversationId, userId, MemberRole.ADMIN);
+        return conversationMemberRepo.existsByConversation_IdAndUser_IdAndRole(conversationId, userId, MemberRole.ADMIN);
     }
 }

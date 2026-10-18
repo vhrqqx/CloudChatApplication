@@ -10,5 +10,5 @@ import com.chatApp.cloudChat.model.Message;
 
 @Repository
 public interface MessagesRepo extends JpaRepository<Message, Long> {
-    Page<Message> findByConversationIdOrderByCreatedAtDesc(Long conversationId, Pageable pageable);
+    Page<Message> findByConversation_IdOrderByCreatedAtDesc(Long conversationId, Pageable pageable);
 }

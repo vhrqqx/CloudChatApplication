@@ -15,14 +15,16 @@ import java.util.Optional;
 
 @Repository
 public interface ConversationMemberRepo extends JpaRepository<ConversationMember, Long> {
-    List<ConversationMember> findByConversationId(Long conversationId);
-    List<ConversationMember> findByUserId(Long userId);
-    Optional<ConversationMember> findByConversationIdAndUserId(Long conversationId, Long userId);
-    boolean existsByConversationIdAndUserId(Long conversationId, Long userId);
+    List<ConversationMember> findByConversation_Id(Long conversationId);
+    List<ConversationMember> findByUser_Id(Long userId);
+    Optional<ConversationMember> findByConversation_IdAndUser_Id(Long conversationId, Long userId);
+    boolean existsByConversation_IdAndUser_Id(Long conversationId, Long userId);
     boolean existsByUserId(Long id);
-    long countByConversationIdAndRole(Long conversationId, MemberRole role);
-    void deleteByConversationIdAndUserId(Long conversationId, Long userId);
-    boolean existsByConversationIdAndUserIdAndRole(Long conversationId, Long userId, MemberRole memberRole);
+    long countByConversation_IdAndRole(Long conversationId, MemberRole role);
+    void deleteByConversation_IdAndUser_Id(Long conversationId, Long userId);
+    void deleteByConversaion_Id(Long conversationId);
+    boolean existsByConversation_IdAndUser_IdAndRole(Long conversationId, Long userId, MemberRole memberRole);
+
     @Query("select m.conversation from ConversationMember m where m.user.id = :userId")
     Page<Conversation> findConversationsOfUser(@Param("user_id") Long userId, Pageable pageable);
 }
