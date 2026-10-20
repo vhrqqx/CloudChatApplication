@@ -25,13 +25,19 @@ public class ConversationController {
     }
     // Create a conversation
     @PostMapping()
-    public ResponseEntity<ConversationResponse> createConversation(@Valid @RequestBody CreateConversationRequest request) {
-        ConversationResponse convo = conversationService.createConversation(request);
+    public ResponseEntity<ConversationResponse> createConversation(@Valid @RequestBody CreateConversationRequest request, Long creatorId) {
+        ConversationResponse convo = conversationService.createConversation(request, creatorId);
         URI location = ServletUriComponentsBuilder.fromCurrentRequest().path("/{id}").buildAndExpand(convo.id()).toUri();
         return ResponseEntity.created(location).body(convo);
     }
     @GetMapping
-    public PagedModel<ConversationResponse> getConversations(Pageable pageable) {
+    public PagedModel<ConversationResponse> listConversations(Pageable pageable) {
         return new PagedModel<>(conversationService.list(pageable));
     }
+    @DeleteMapping("/{conversation_id}")
+    public ResponseEntity<Void> deleteConversation(@PathVariable Long conversation_id, Long currentUserId) {
+        conversationService.deleteByConversationId(conversation_id, currentUserId);
+        return ResponseEntity.noContent().build();
+    }
+
 }

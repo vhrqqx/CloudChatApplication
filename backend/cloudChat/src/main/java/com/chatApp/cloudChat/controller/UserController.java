@@ -39,22 +39,22 @@ public class UserController {
     @PostMapping("/auth/register")
     public ResponseEntity<UserResponse> registerUser(@Valid @RequestBody RegisterRequest request) {
         UserResponse newUser = userService.registerUser(request);
-        URI location  = ServletUriComponentsBuilder.fromCurrentRequest().path("{/id}").buildAndExpand(newUser.id()).toUri();
+        URI location  = ServletUriComponentsBuilder.fromCurrentRequest().path("/api/v1/user/{id}").buildAndExpand(newUser.id()).toUri();
         return ResponseEntity.created(location).body(newUser);
     }
 
-    @DeleteMapping("/me")
+    @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
         userService.deleteByUserId(id);
         return ResponseEntity.noContent().build();
     }
 
-    @PatchMapping("/me")
+    @PatchMapping("/{id}")
     public UserResponse updateUsername(@PathVariable Long id, @Valid @RequestBody UpdateUserRequest request) {
         return userService.updateUsername(id, request);
     }
 
-    @PutMapping("/password/me")
+    @PutMapping("/password/{id}")
     public ResponseEntity<Void> updatePassword(@PathVariable Long id, @Valid @RequestBody UpdatePasswordRequest request) {
         userService.updatePassword(request, id);
         return ResponseEntity.noContent().build();

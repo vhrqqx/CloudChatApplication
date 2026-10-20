@@ -70,7 +70,7 @@ public class ConversationService {
     public void deleteByConversationId(Long id, Long currentUserId) {
         if (!conversationRepo.existsById(id)) throw new ConversationNotFoundException("Không tìm thấy cuộc trò chuyện với mã " + id);
         if (!memberService.isAdmin(id, currentUserId)) throw new AccessDeniedException("Bạn không có quyền làm việc này!");
-        conversationMemberRepo.deleteByConversaion_Id(id);
+        conversationMemberRepo.deleteByConversation_Id(id);
         conversationRepo.deleteById(id);
     }
     @Transactional(readOnly = true)

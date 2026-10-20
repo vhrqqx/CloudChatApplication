@@ -46,8 +46,7 @@ public class ConversationMemberService {
             throw new IllegalArgumentException("Bạn không phải là thành viên của cuộc trò chuyện này");
         }
 
-        User targetUser = usersRepo.findById(request.userId())
-                .orElseThrow(() -> new UserNotFoundException("Không tìm thấy người dùng với mã " + request.userId()));
+        User targetUser = usersRepo.findById(request.userId()).orElseThrow(() -> new UserNotFoundException("Không tìm thấy người dùng với mã " + request.userId()));
 
         if (targetUser.isDeleted()) throw new IllegalArgumentException("Tài khoản này đã bị xóa.");
 

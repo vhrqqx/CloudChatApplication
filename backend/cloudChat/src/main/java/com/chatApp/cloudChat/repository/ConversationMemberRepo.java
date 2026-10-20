@@ -22,7 +22,7 @@ public interface ConversationMemberRepo extends JpaRepository<ConversationMember
     boolean existsByUserId(Long id);
     long countByConversation_IdAndRole(Long conversationId, MemberRole role);
     void deleteByConversation_IdAndUser_Id(Long conversationId, Long userId);
-    void deleteByConversaion_Id(Long conversationId);
+    void deleteByConversation_Id(Long conversationId);
     boolean existsByConversation_IdAndUser_IdAndRole(Long conversationId, Long userId, MemberRole memberRole);
 
     @Query("select m.conversation from ConversationMember m where m.user.id = :userId")

@@ -40,26 +40,25 @@ public class MessageService {
     @Transactional(readOnly = true)
     public MessageResponse findByMessageId(Long id, Long conversationId, Long userId) {
         if (!conversationMemberService.isMember(conversationId, userId)) throw new AccessDeniedException("Bạn không có quyền làm việc này!");
-        Message message = messagesRepo.findById(id).orElseThrow(() -> new MessageNotFoundException("Tin nhắn không tồn tại!"));
-        if (!message.getConversationId().equals(conversationId)) throw new AccessDeniedException("Bạn không có quyền xem tin nhắn từ cuộc hội thoại khác");
+        Message message = messagesRepo.findByIdAndConversation_Id(id, conversationId).orElseThrow(() -> new MessageNotFoundException("Tin nhắn không tồn tại!"));
         return MessageResponse.from(message);
     }
     @Transactional
     public MessageResponse sendMessage(Long conversationId, Long senderId, SendMessageRequest request) {
         Conversation conversation = conversationRepo.findById(conversationId).orElseThrow(() -> new ConversationNotFoundException("Không tìm thấy cuộc hội thoại " + conversationId));
         User sender = usersRepo.findById(senderId).orElseThrow(() -> new UserNotFoundException("Không tìm thấy người dùng + " + senderId));
-        if (!conversationMemberService.isMember(conversationId, senderId)) throw new IllegalArgumentException("Bạn không phải là thành viên của cuộc trò chuyện này!");
+        if (!conversationMemberService.isMember(conversationId, senderId)) throw new AccessDeniedException("Bạn không phải là thành viên của cuộc trò chuyện này!");
         Message message = new Message(conversation, sender, request.messageContent(), MessageType.TEXT);
         return MessageResponse.from(messagesRepo.save(message));
     }
     @Transactional
     public MessageResponse editMessage(Long messageId, Long currentUserId, UpdateMessageRequest request) {
         Message message = messagesRepo.findById(messageId).orElseThrow(() -> new MessageNotFoundException("Không tìm thấy tin nhắn với mã" + messageId));
-        if (!conversationMemberService.isMember(message.getConversationId(), message.getSenderId())) throw new AccessDeniedException("Bạn không có quyền sửa tin nhắn trong cuộc hội thoại này!");
+        if (!conversationMemberService.isMember(message.getConversationId(), currentUserId)) throw new AccessDeniedException("Bạn không có quyền sửa tin nhắn trong cuộc hội thoại này!");
+        if (!message.getSenderId().equals(currentUserId)) throw new AccessDeniedException("Bạn chỉ có thể sửa tin nhắn của chính mình!");
         if (message.getMessageType() == MessageType.ATTACHMENT) throw new IllegalArgumentException("Bạn không thể chỉnh sửa tin nhắn đính kèm tệp");
-        if (!message.getSenderId().equals(currentUserId)) throw new IllegalArgumentException("Bạn chỉ có thể sửa tin nhắn của chính mình!");
         message.setContent(request.content());
-        return MessageResponse.from(message);
+        return MessageResponse.from(messagesRepo.save(message));
     }
     @Transactional
     public void deleteByMessageId(Long messageId, Long currentUserId) {
@@ -67,12 +66,12 @@ public class MessageService {
         // Check xem đây có phải là thành viên nhóm hay là quản trị viên trong nhóm hay không
         boolean isSender = message.getSenderId().equals(currentUserId);
         boolean isAdmin = conversationMemberService.isAdmin(message.getConversationId(), currentUserId);
-        if (!isSender && !isAdmin) throw new IllegalArgumentException("Bạn không có quyền để làm điều này!");
+        if (!isSender && !isAdmin) throw new AccessDeniedException("Bạn không có quyền để làm điều này!");
         messagesRepo.deleteById(messageId);
     }
     @Transactional(readOnly = true)
     public Page<MessageResponse> getMessageByConversation(Long conversationId, Long currentUserId, Pageable pageable) {
-        if (!conversationMemberService.isMember(conversationId, currentUserId)) throw new IllegalArgumentException("Bạn không có quyền xem tin nhắn của cuộc trò chuyện này!");
+        if (!conversationMemberService.isMember(conversationId, currentUserId)) throw new AccessDeniedException("Bạn không có quyền xem tin nhắn của cuộc trò chuyện này!");
         return messagesRepo.findByConversation_IdOrderByCreatedAtDesc(conversationId, pageable).map(MessageResponse::from);
     }
 }
