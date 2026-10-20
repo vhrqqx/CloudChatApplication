@@ -45,7 +45,7 @@ public class UserService {
 
     @Transactional(readOnly = true)
     public UserResponse findByUserIdAndIsDeletedFalse(Long id) {
-        return usersRepo.findByUserIdAndIsDeletedFalse(id).map(UserResponse::from).orElseThrow(() -> new UserNotFoundException("Không tìm thấy người dùng với mã "+ id));
+        return usersRepo.findByIdAndIsDeletedFalse(id).map(UserResponse::from).orElseThrow(() -> new UserNotFoundException("Không tìm thấy người dùng với mã "+ id));
     }
     @Transactional
     public UserResponse updateUsername(Long id, UpdateUserRequest request) {

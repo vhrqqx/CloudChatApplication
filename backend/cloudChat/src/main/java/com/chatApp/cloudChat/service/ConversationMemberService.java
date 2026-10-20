@@ -130,7 +130,7 @@ public class ConversationMemberService {
 
         List<ConversationMember> members = conversationMemberRepo.findByConversation_Id(conversationId);
         List<Long> userIds = members.stream().map(ConversationMember::getUserId).toList();
-        Map<Long, String> usernames = usersRepo.findAllById(userIds).stream().collect(Collectors.toMap(User::getUserId, User::getUsername));
+        Map<Long, String> usernames = usersRepo.findAllById(userIds).stream().collect(Collectors.toMap(User::getId, User::getUsername));
 
         return members.stream().map(m -> new MemberResponse(m.getUserId(), usernames.getOrDefault(m.getUserId(), "Unknown"), m.getRole())).toList();
     }

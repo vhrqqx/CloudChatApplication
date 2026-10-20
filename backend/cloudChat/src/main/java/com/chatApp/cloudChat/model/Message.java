@@ -85,7 +85,7 @@ public class Message {
     }
 
     public Long getSenderId() {
-        return sender != null ? sender.getUserId() : null;
+        return sender != null ? sender.getId() : null;
     }
 
     public List<Attachment> getAttachments() {

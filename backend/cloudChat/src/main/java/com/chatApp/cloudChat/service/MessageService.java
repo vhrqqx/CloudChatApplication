@@ -10,7 +10,6 @@ import com.chatApp.cloudChat.repository.ConversationRepo;
 import com.chatApp.cloudChat.repository.UsersRepo;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,7 +19,6 @@ import com.chatApp.cloudChat.DTO.UpdateMessageRequest;
 import com.chatApp.cloudChat.exception.MessageNotFoundException;
 import com.chatApp.cloudChat.model.Message;
 import com.chatApp.cloudChat.repository.MessagesRepo;
-import org.springframework.web.client.HttpStatusCodeException;
 
 
 
@@ -46,10 +44,10 @@ public class MessageService {
     @Transactional
     public MessageResponse sendMessage(Long conversationId, Long senderId, SendMessageRequest request) {
         Conversation conversation = conversationRepo.findById(conversationId).orElseThrow(() -> new ConversationNotFoundException("Không tìm thấy cuộc hội thoại " + conversationId));
-        User sender = usersRepo.findById(senderId).orElseThrow(() -> new UserNotFoundException("Không tìm thấy người dùng + " + senderId));
+        User sender = usersRepo.findByIdAndIsDeletedFalse(senderId).orElseThrow(() -> new UserNotFoundException("Không tìm thấy người dùng + " + senderId));
         if (!conversationMemberService.isMember(conversationId, senderId)) throw new AccessDeniedException("Bạn không phải là thành viên của cuộc trò chuyện này!");
         Message message = new Message(conversation, sender, request.messageContent(), MessageType.TEXT);
-        return MessageResponse.from(messagesRepo.save(message));
+        return MessageResponse.from(message);
     }
     @Transactional
     public MessageResponse editMessage(Long messageId, Long currentUserId, UpdateMessageRequest request) {
@@ -58,7 +56,7 @@ public class MessageService {
         if (!message.getSenderId().equals(currentUserId)) throw new AccessDeniedException("Bạn chỉ có thể sửa tin nhắn của chính mình!");
         if (message.getMessageType() == MessageType.ATTACHMENT) throw new IllegalArgumentException("Bạn không thể chỉnh sửa tin nhắn đính kèm tệp");
         message.setContent(request.content());
-        return MessageResponse.from(messagesRepo.save(message));
+        return MessageResponse.from(message);
     }
     @Transactional
     public void deleteByMessageId(Long messageId, Long currentUserId) {

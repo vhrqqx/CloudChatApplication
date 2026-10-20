@@ -50,11 +50,11 @@ public class User {
         return isDeleted;
     }
 
-    public Long getUserId() {
+    public Long getId() {
         return id;
     }
 
-    public void setUserId(Long id) {
+    public void setId(Long id) {
         this.id = id;
     }
 
@@ -102,7 +102,7 @@ public class User {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof User other)) return false;
-        return id != null && id.equals(other.getUserId());
+        return id != null && id.equals(other.getId());
     }
 
     @Override

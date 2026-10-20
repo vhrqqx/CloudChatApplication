@@ -25,6 +25,6 @@ public interface ConversationMemberRepo extends JpaRepository<ConversationMember
     void deleteByConversation_Id(Long conversationId);
     boolean existsByConversation_IdAndUser_IdAndRole(Long conversationId, Long userId, MemberRole memberRole);
 
-    @Query("select m.conversation from ConversationMember m where m.user.id = :userId")
-    Page<Conversation> findConversationsOfUser(@Param("user_id") Long userId, Pageable pageable);
+    @Query("select m.conversation from ConversationMember m where m.user.id = :id")
+    Page<Conversation> findConversationsOfUser(@Param("id") Long userId, Pageable pageable);
 }

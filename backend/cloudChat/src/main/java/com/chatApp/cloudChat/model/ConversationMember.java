@@ -52,7 +52,7 @@ public class ConversationMember {
     }
 
     public Long getUserId() {
-        return user != null ? user.getUserId() : null;
+        return user != null ? user.getId() : null;
     }
 
     public Conversation getConversation() {
