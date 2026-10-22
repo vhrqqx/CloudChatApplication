@@ -43,11 +43,11 @@ public class MessageService {
     }
     @Transactional
     public MessageResponse sendMessage(Long conversationId, Long senderId, SendMessageRequest request) {
+        if (!conversationMemberService.isMember(conversationId, senderId)) throw new AccessDeniedException("Bạn không phải là thành viên của cuộc trò chuyện này!");
         Conversation conversation = conversationRepo.findById(conversationId).orElseThrow(() -> new ConversationNotFoundException("Không tìm thấy cuộc hội thoại " + conversationId));
         User sender = usersRepo.findByIdAndIsDeletedFalse(senderId).orElseThrow(() -> new UserNotFoundException("Không tìm thấy người dùng + " + senderId));
-        if (!conversationMemberService.isMember(conversationId, senderId)) throw new AccessDeniedException("Bạn không phải là thành viên của cuộc trò chuyện này!");
         Message message = new Message(conversation, sender, request.messageContent(), MessageType.TEXT);
-        return MessageResponse.from(message);
+        return MessageResponse.from(messagesRepo.save(message));
     }
     @Transactional
     public MessageResponse editMessage(Long messageId, Long currentUserId, UpdateMessageRequest request) {
@@ -65,7 +65,7 @@ public class MessageService {
         boolean isSender = message.getSenderId().equals(currentUserId);
         boolean isAdmin = conversationMemberService.isAdmin(message.getConversationId(), currentUserId);
         if (!isSender && !isAdmin) throw new AccessDeniedException("Bạn không có quyền để làm điều này!");
-        messagesRepo.deleteById(messageId);
+        messagesRepo.delete(message);
     }
     @Transactional(readOnly = true)
     public Page<MessageResponse> getMessageByConversation(Long conversationId, Long currentUserId, Pageable pageable) {

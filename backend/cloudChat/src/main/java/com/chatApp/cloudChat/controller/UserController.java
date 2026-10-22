@@ -39,7 +39,7 @@ public class UserController {
     @PostMapping("/auth/register")
     public ResponseEntity<UserResponse> registerUser(@Valid @RequestBody RegisterRequest request) {
         UserResponse newUser = userService.registerUser(request);
-        URI location  = ServletUriComponentsBuilder.fromCurrentRequest().path("/api/v1/user/{id}").buildAndExpand(newUser.id()).toUri();
+        URI location  = ServletUriComponentsBuilder.fromCurrentRequest().path("/{id}").buildAndExpand(newUser.id()).toUri();
         return ResponseEntity.created(location).body(newUser);
     }
 

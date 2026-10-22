@@ -4,6 +4,7 @@ import com.chatApp.cloudChat.DTO.ConversationResponse;
 import com.chatApp.cloudChat.DTO.CreateConversationRequest;
 import com.chatApp.cloudChat.exception.ConversationNotFoundException;
 import com.chatApp.cloudChat.exception.UserNotFoundException;
+import com.chatApp.cloudChat.repository.MessagesRepo;
 import org.springframework.security.access.AccessDeniedException;
 import com.chatApp.cloudChat.model.*;
 import com.chatApp.cloudChat.repository.ConversationMemberRepo;
@@ -25,11 +26,14 @@ public class ConversationService {
     private final UsersRepo usersRepo;
     private final ConversationMemberRepo conversationMemberRepo;
     private final ConversationMemberService memberService;
-    public ConversationService(ConversationRepo conversationRepo, UsersRepo usersRepo, ConversationMemberRepo conversationMemberRepo, ConversationMemberService memberService) {
+    private final MessagesRepo messagesRepo;
+
+    public ConversationService(ConversationRepo conversationRepo, UsersRepo usersRepo, ConversationMemberRepo conversationMemberRepo, ConversationMemberService memberService, MessagesRepo messagesRepo) {
         this.conversationRepo = conversationRepo;
         this.usersRepo = usersRepo;
         this.conversationMemberRepo = conversationMemberRepo;
         this.memberService = memberService;
+        this.messagesRepo = messagesRepo;
     }
     @Transactional
     public ConversationResponse createConversation(CreateConversationRequest request, Long creatorId) {
@@ -70,11 +74,12 @@ public class ConversationService {
     public void deleteByConversationId(Long id, Long currentUserId) {
         if (!conversationRepo.existsById(id)) throw new ConversationNotFoundException("Không tìm thấy cuộc trò chuyện với mã " + id);
         if (!memberService.isAdmin(id, currentUserId)) throw new AccessDeniedException("Bạn không có quyền làm việc này!");
+        messagesRepo.deleteByConversation_Id(id);
         conversationMemberRepo.deleteByConversation_Id(id);
         conversationRepo.deleteById(id);
     }
     @Transactional(readOnly = true)
-    public Page<ConversationResponse> list(Pageable pageable) {
-        return conversationRepo.findAll(pageable).map(ConversationResponse::from);
+    public Page<ConversationResponse> list(Pageable pageable, Long userId) {
+        return conversationRepo.findByMember(userId, pageable).map(ConversationResponse::from);
     }
 }

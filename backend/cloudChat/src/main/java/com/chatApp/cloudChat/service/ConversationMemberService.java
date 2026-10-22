@@ -13,6 +13,7 @@ import com.chatApp.cloudChat.model.User;
 import com.chatApp.cloudChat.repository.ConversationMemberRepo;
 import com.chatApp.cloudChat.repository.ConversationRepo;
 import com.chatApp.cloudChat.repository.UsersRepo;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -43,7 +44,7 @@ public class ConversationMemberService {
         }
 
         if (!isMember(conversationId, currentUserId)) {
-            throw new IllegalArgumentException("Bạn không phải là thành viên của cuộc trò chuyện này");
+            throw new AccessDeniedException("Bạn không phải là thành viên của cuộc trò chuyện này");
         }
 
         User targetUser = usersRepo.findById(request.userId()).orElseThrow(() -> new UserNotFoundException("Không tìm thấy người dùng với mã " + request.userId()));
@@ -62,11 +63,11 @@ public class ConversationMemberService {
     @Transactional
     public void removeMember(Long conversationId, Long currentUserId, Long targetUserId) {
         if (!isAdmin(conversationId, currentUserId)) {
-            throw new IllegalArgumentException("Chỉ quản trị viên mới có quyền xóa thành viên khỏi nhóm");
+            throw new AccessDeniedException("Chỉ quản trị viên mới có quyền xóa thành viên khỏi nhóm");
         }
 
         if (currentUserId.equals(targetUserId)) {
-            throw new IllegalArgumentException("Không thể tự xóa chính mình khỏi nhóm, vui lòng dùng chức năng rời nhóm");
+            throw new AccessDeniedException("Không thể tự xóa chính mình khỏi nhóm, vui lòng dùng chức năng rời nhóm");
         }
 
         ConversationMember member = conversationMemberRepo.findByConversation_IdAndUser_Id(conversationId, targetUserId)
@@ -79,7 +80,7 @@ public class ConversationMemberService {
     public void leaveConversation(Long conversationId, Long userId) {
         ConversationMember leavingMember = conversationMemberRepo.findByConversation_IdAndUser_Id(conversationId, userId).orElseThrow(() -> new MemberNotFoundException("Không tìm thấy thành viên trong cuộc trò chuyện"));
 
-        if(leavingMember.getConversation().getConvoType() == ConversationType.DIRECT) throw new IllegalArgumentException("Bạn không thể rời chat trong cuộc trò chuyện direct");
+        if(leavingMember.getConversation().getConvoType() == ConversationType.DIRECT) throw new AccessDeniedException("Bạn không thể rời chat trong cuộc trò chuyện direct");
 
         List<ConversationMember> allMembers = conversationMemberRepo.findByConversation_Id(conversationId);
 
@@ -104,7 +105,7 @@ public class ConversationMemberService {
     @Transactional
     public MemberResponse changeRole(Long conversationId, Long currentUserId, Long targetUserId, MemberRole newRole) {
         if (!isAdmin(conversationId, currentUserId)) {
-            throw new IllegalArgumentException("Chỉ quản trị viên mới có quyền thay đổi vai trò của thành viên");
+            throw new AccessDeniedException("Chỉ quản trị viên mới có quyền thay đổi vai trò của thành viên");
         }
 
         ConversationMember targetMember = conversationMemberRepo.findByConversation_IdAndUser_Id(conversationId, targetUserId).orElseThrow(() -> new MemberNotFoundException("Không tìm thấy thành viên trong cuộc trò chuyện"));
@@ -112,7 +113,7 @@ public class ConversationMemberService {
         if (currentUserId.equals(targetUserId) && newRole != MemberRole.ADMIN) {
             long adminCount = conversationMemberRepo.countByConversation_IdAndRole(conversationId, MemberRole.ADMIN);
             if (adminCount <= 1) {
-                throw new IllegalStateException("Không thể hạ quyền của quản trị viên duy nhất trong nhóm");
+                throw new AccessDeniedException("Không thể hạ quyền của quản trị viên duy nhất trong nhóm");
             }
         }
 
@@ -125,7 +126,7 @@ public class ConversationMemberService {
     @Transactional(readOnly = true)
     public List<MemberResponse> getMembersByConversation(Long conversationId, Long currentUserId) {
         if (!isMember(conversationId, currentUserId)) {
-            throw new IllegalArgumentException("Bạn không phải là thành viên của cuộc trò chuyện này");
+            throw new AccessDeniedException("Bạn không phải là thành viên của cuộc trò chuyện này");
         }
 
         List<ConversationMember> members = conversationMemberRepo.findByConversation_Id(conversationId);

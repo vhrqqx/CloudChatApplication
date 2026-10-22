@@ -15,6 +15,7 @@ import org.apache.tika.metadata.Metadata;
 import org.apache.tika.metadata.TikaCoreProperties;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -23,6 +24,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Set;
+import java.util.UUID;
 
 
 @Service
@@ -61,7 +63,7 @@ public class AttachmentService {
     public AttachmentResponse findByMessageId(Long id, Long userId) {
         Attachment attachment = attachmentRepo.findById(id).orElseThrow(() -> new AttachmentNotFoundException("Không tìm thấy tệp với mã " + id));
         Long conversationId = attachment.getMessage().getConversationId();
-        if (!memberService.isAdmin(conversationId, userId)) throw new IllegalArgumentException("Bạn không có quyền làm việc này!");
+        if (!memberService.isMember(conversationId, userId)) throw new AccessDeniedException("Bạn không có quyền làm việc này!");
         return AttachmentResponse.from(attachment);
     }
     @Transactional
@@ -72,7 +74,7 @@ public class AttachmentService {
         // Sử dụng Tika để trích xuất content type của file có an toàn hay không
         String originalFileName = file.getOriginalFilename() != null ? file.getOriginalFilename() : "unknown";
         String detectedContentType = detectAndValidateMimeType(file, originalFileName);
-        String objectKey = StringUtils.cleanPath(originalFileName).replaceAll("[^A-Za-z0-9._-]", "_");
+        String objectKey = UUID.randomUUID() + "-" + StringUtils.cleanPath(originalFileName).replaceAll("[^A-Za-z0-9._-]", "_");
         Conversation conversation = conversationRepo.findById(conversationId).orElseThrow(() -> new ConversationNotFoundException("Không tìm thấy cuộc hội thoại" + conversationId));
         User sender = usersRepo.findById(senderId).orElseThrow(() -> new UserNotFoundException("Không tìm thấy người dùng " + senderId));
         // Tạo message và Attachment mới
@@ -90,7 +92,7 @@ public class AttachmentService {
         if (!currentConversationId.equals(conversationId)) throw new IllegalArgumentException("Tệp không thuộc cuộc hội thoại hiện tại!");
         boolean isMember = message.getSenderId().equals(currentUserId);
         boolean isAdmin = memberService.isAdmin(conversationId, currentUserId);
-        if (!isAdmin && !isMember) throw new IllegalArgumentException("Bạn không có quyền làm điều này!");
+        if (!isAdmin && !isMember) throw new AccessDeniedException("Bạn không có quyền làm điều này!");
         attachmentRepo.delete(attachment);
     }
     @Transactional(readOnly = true)

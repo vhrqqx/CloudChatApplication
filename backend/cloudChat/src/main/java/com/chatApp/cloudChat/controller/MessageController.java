@@ -3,7 +3,6 @@ package com.chatApp.cloudChat.controller;
 import com.chatApp.cloudChat.DTO.MessageResponse;
 import com.chatApp.cloudChat.DTO.SendMessageRequest;
 import com.chatApp.cloudChat.DTO.UpdateMessageRequest;
-import com.chatApp.cloudChat.model.Message;
 import com.chatApp.cloudChat.service.MessageService;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Pageable;
@@ -11,7 +10,6 @@ import org.springframework.data.web.PagedModel;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/message")
@@ -27,24 +25,24 @@ public class MessageController {
         return new PagedModel<>(messageService.getMessageByConversation(conversationId, currentUserId, pageable));
     }
 
-    @GetMapping("{/messageId}")
+    @GetMapping("/{messageId}")
     public MessageResponse getMessageById(@PathVariable Long messageId, @RequestParam Long conversationId, @RequestParam Long currentUserId) {
         return messageService.findByMessageId(messageId, conversationId, currentUserId);
     }
 
     @PostMapping
-    public ResponseEntity<MessageResponse> sendMsg(@Valid @RequestBody SendMessageRequest request, @RequestParam Long conversationId, @RequestParam Long senderId) {
-        MessageResponse createdMsg = messageService.sendMessage(conversationId, senderId, request);
+    public ResponseEntity<MessageResponse> sendMsg(@Valid @RequestBody SendMessageRequest request, @RequestParam Long conversationId, @RequestParam Long currentUserId) {
+        MessageResponse createdMsg = messageService.sendMessage(conversationId, currentUserId, request);
         return ResponseEntity.status(201).body(createdMsg);
     }
 
-    @PatchMapping("{/messageId}")
+    @PatchMapping("/{messageId}")
     public ResponseEntity<MessageResponse> editMsg(@Valid @RequestBody UpdateMessageRequest request, @PathVariable Long messageId, @RequestParam Long currentUserId) {
         MessageResponse newMsg = messageService.editMessage(messageId, currentUserId, request);
-        return ResponseEntity.status(200).body(newMsg);
+        return ResponseEntity.ok(newMsg);
     }
 
-    @DeleteMapping("{/messageId}")
+    @DeleteMapping("/{messageId}")
     public ResponseEntity<Void> deleteMsg(@PathVariable Long messageId, @RequestParam Long currentUserId) {
         messageService.deleteByMessageId(messageId, currentUserId);
         return ResponseEntity.noContent().build();
