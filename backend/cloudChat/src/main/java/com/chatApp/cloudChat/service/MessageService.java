@@ -29,11 +29,13 @@ public class MessageService {
     private final ConversationRepo conversationRepo;
     private final ConversationMemberService conversationMemberService;
     private final UsersRepo usersRepo;
-    public MessageService(MessagesRepo messagesRepo, ConversationRepo conversationRepo, ConversationMemberService conversationMemberService, UsersRepo usersRepo) {
+    private final ConversationPurgeService purgeService;
+    public MessageService(MessagesRepo messagesRepo, ConversationRepo conversationRepo, ConversationMemberService conversationMemberService, UsersRepo usersRepo, ConversationPurgeService purgeService) {
         this.messagesRepo = messagesRepo;
         this.conversationRepo = conversationRepo;
         this.conversationMemberService = conversationMemberService;
         this.usersRepo = usersRepo;
+        this.purgeService = purgeService;
     }
     @Transactional(readOnly = true)
     public MessageResponse findByMessageId(Long id, Long conversationId, Long userId) {
@@ -52,7 +54,9 @@ public class MessageService {
     @Transactional
     public MessageResponse editMessage(Long messageId, Long currentUserId, UpdateMessageRequest request) {
         Message message = messagesRepo.findById(messageId).orElseThrow(() -> new MessageNotFoundException("Không tìm thấy tin nhắn với mã" + messageId));
-        if (!conversationMemberService.isMember(message.getConversationId(), currentUserId)) throw new AccessDeniedException("Bạn không có quyền sửa tin nhắn trong cuộc hội thoại này!");
+        // Non-members get the same 404 as an unknown message id so the route carries no
+        // existence oracle; membership alone only narrows the response space.
+        if (!conversationMemberService.isMember(message.getConversationId(), currentUserId)) throw new MessageNotFoundException("Không tìm thấy tin nhắn với mã" + messageId);
         if (!message.getSenderId().equals(currentUserId)) throw new AccessDeniedException("Bạn chỉ có thể sửa tin nhắn của chính mình!");
         if (message.getMessageType() == MessageType.ATTACHMENT) throw new IllegalArgumentException("Bạn không thể chỉnh sửa tin nhắn đính kèm tệp");
         message.setContent(request.content());
@@ -61,11 +65,15 @@ public class MessageService {
     @Transactional
     public void deleteByMessageId(Long messageId, Long currentUserId) {
         Message message = messagesRepo.findById(messageId).orElseThrow(() -> new MessageNotFoundException("Không tìm thấy tin nhắn với mã " + messageId));
-        // Check xem đây có phải là thành viên nhóm hay là quản trị viên trong nhóm hay không
+        // Membership gate (parity with editMessage) before the sender/admin split, and a
+        // non-member sees the same 404 as an unknown id — no existence probe.
+        if (!conversationMemberService.isMember(message.getConversationId(), currentUserId)) throw new MessageNotFoundException("Không tìm thấy tin nhắn với mã " + messageId);
         boolean isSender = message.getSenderId().equals(currentUserId);
         boolean isAdmin = conversationMemberService.isAdmin(message.getConversationId(), currentUserId);
         if (!isSender && !isAdmin) throw new AccessDeniedException("Bạn không có quyền để làm điều này!");
-        messagesRepo.delete(message);
+        // Storage-aware delete: the attachment rows cascade away with the message, so the
+        // stored objects must be removed too or they become permanent, unidentifiable orphans.
+        purgeService.purgeMessageData(message);
     }
     @Transactional(readOnly = true)
     public Page<MessageResponse> getMessageByConversation(Long conversationId, Long currentUserId, Pageable pageable) {

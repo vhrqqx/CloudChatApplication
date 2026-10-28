@@ -1,20 +1,16 @@
 package com.chatApp.cloudChat.controller;
 
-import com.chatApp.cloudChat.DTO.RegisterRequest;
 import com.chatApp.cloudChat.DTO.UpdatePasswordRequest;
 import com.chatApp.cloudChat.DTO.UpdateUserRequest;
 import com.chatApp.cloudChat.DTO.UserResponse;
-import com.chatApp.cloudChat.model.User;
+import com.chatApp.cloudChat.security.AppUserPrincipal;
 import com.chatApp.cloudChat.service.UserService;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PagedModel;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
-
-
-import java.net.URI;
 
 @RestController
 @RequestMapping("/api/v1/user")
@@ -25,6 +21,7 @@ public class UserController {
         this.userService = userService;
     }
 
+    // Reading another user's public profile is fine; UserResponse never exposes the password.
     @GetMapping("/{id}")
     public UserResponse getUserById(@PathVariable Long id) {
         return userService.findByUserIdAndIsDeletedFalse(id);
@@ -36,27 +33,22 @@ public class UserController {
         return new PagedModel<>(userService.getAll(pageable));
     }
 
-    @PostMapping("/auth/register")
-    public ResponseEntity<UserResponse> registerUser(@Valid @RequestBody RegisterRequest request) {
-        UserResponse newUser = userService.registerUser(request);
-        URI location  = ServletUriComponentsBuilder.fromCurrentRequest().path("/{id}").buildAndExpand(newUser.id()).toUri();
-        return ResponseEntity.created(location).body(newUser);
-    }
-
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
-        userService.deleteByUserId(id);
+    @DeleteMapping("/me")
+    public ResponseEntity<Void> deleteMe(@AuthenticationPrincipal AppUserPrincipal principal) {
+        userService.deleteByUserId(principal.getId());
         return ResponseEntity.noContent().build();
     }
 
-    @PatchMapping("/{id}")
-    public UserResponse updateUsername(@PathVariable Long id, @Valid @RequestBody UpdateUserRequest request) {
-        return userService.updateUsername(id, request);
+    @PatchMapping("/me")
+    public UserResponse updateMyUsername(@AuthenticationPrincipal AppUserPrincipal principal,
+                                         @Valid @RequestBody UpdateUserRequest request) {
+        return userService.updateUsername(principal.getId(), request);
     }
 
-    @PutMapping("/password/{id}")
-    public ResponseEntity<Void> updatePassword(@PathVariable Long id, @Valid @RequestBody UpdatePasswordRequest request) {
-        userService.updatePassword(request, id);
+    @PutMapping("/me/password")
+    public ResponseEntity<Void> updateMyPassword(@AuthenticationPrincipal AppUserPrincipal principal,
+                                                 @Valid @RequestBody UpdatePasswordRequest request) {
+        userService.updatePassword(request, principal.getId());
         return ResponseEntity.noContent().build();
     }
 }

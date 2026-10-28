@@ -1,11 +1,19 @@
 package com.chatApp.cloudChat.model;
 
-import jakarta.persistence.*;
-import jakarta.validation.constraints.Email;
-import org.hibernate.annotations.CreationTimestamp;
-
 import java.time.Instant;
 import java.util.UUID;
+
+import org.hibernate.annotations.CreationTimestamp;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+import jakarta.validation.constraints.Email;
 
 @Entity
 @Table(name = "users")
@@ -23,6 +31,14 @@ public class User {
     @Column(nullable = false)
     private boolean isDeleted = false;
     private Instant deletedAt;
+    /**
+     * Credential-generation counter embedded in every issued access token ("ver" claim) and
+     * re-checked against the row on every request. Bumped whenever a credential changes
+     * (password rotation, account deletion) so outstanding tokens for the previous
+     * generation are rejected immediately instead of lingering until their TTL expires.
+     */
+    @Column(nullable = false)
+    private long tokenVersion = 0;
     @CreationTimestamp
     @Column(nullable = false, updatable = false)
     private Instant createdAt;
@@ -44,10 +60,23 @@ public class User {
         this.username = "Unknown User";
         this.userEmail = "deleted_" + this.id + "_" + UUID.randomUUID().toString().substring(0, 8) + "_" + this.userEmail;
         this.password = "";
+        this.tokenVersion++; // reject every outstanding token for this account
+    }
+
+    public long getTokenVersion() {
+        return tokenVersion;
+    }
+
+    public void bumpTokenVersion() {
+        this.tokenVersion++;
     }
 
     public boolean isDeleted() {
         return isDeleted;
+    }
+
+    public void setDeleted(boolean deleted) {
+        this.isDeleted = deleted;
     }
 
     public Long getId() {
@@ -82,6 +111,14 @@ public class User {
         this.password = password;
     }
 
+    public Instant getDeletedAt() {
+        return deletedAt;
+    }
+
+    public void setDeletedAt(Instant deletedAt) {
+        this.deletedAt = deletedAt;
+    }
+
     public Instant getCreatedAt() {
         return createdAt;
     }
@@ -97,7 +134,7 @@ public class User {
     public void setStatus(UserStatus status) {
         this.status = status;
     }
-
+    
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

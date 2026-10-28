@@ -52,10 +52,6 @@ public class Message {
         return id;
     }
 
-    public void setMessageId(Long id) {
-        this.id = id;
-    }
-
     public String getContent() {
         return content;
     }

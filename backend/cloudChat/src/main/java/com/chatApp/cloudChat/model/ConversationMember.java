@@ -4,7 +4,16 @@ import jakarta.persistence.*;
 
 import java.util.Objects;
 
+/**
+ * The tenancy row: a user's membership in a conversation. The (conversation_id, user_id) pair
+ * is unique at the database level — the application-level duplicate check in addMember races
+ * under concurrency, so this constraint is the real guard against duplicate memberships (a
+ * duplicate would wedge every single-row membership lookup for that user).
+ */
 @Entity
+@Table(uniqueConstraints = @UniqueConstraint(
+        name = "uk_conversation_member_conversation_user",
+        columnNames = {"conversation_id", "user_id"}))
 public class ConversationMember {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

@@ -7,5 +7,5 @@ import jakarta.validation.constraints.Size;
 
 import java.util.Set;
 
-public record CreateConversationRequest(@NotNull ConversationType conversationType, @NotNull Set<Long> memberId) {}
+public record CreateConversationRequest(@NotNull ConversationType conversationType, @NotNull @Size(max = 50) Set<Long> memberId) {}
 

@@ -4,7 +4,6 @@ import com.chatApp.cloudChat.DTO.ConversationResponse;
 import com.chatApp.cloudChat.DTO.CreateConversationRequest;
 import com.chatApp.cloudChat.exception.ConversationNotFoundException;
 import com.chatApp.cloudChat.exception.UserNotFoundException;
-import com.chatApp.cloudChat.repository.MessagesRepo;
 import org.springframework.security.access.AccessDeniedException;
 import com.chatApp.cloudChat.model.*;
 import com.chatApp.cloudChat.repository.ConversationMemberRepo;
@@ -26,14 +25,14 @@ public class ConversationService {
     private final UsersRepo usersRepo;
     private final ConversationMemberRepo conversationMemberRepo;
     private final ConversationMemberService memberService;
-    private final MessagesRepo messagesRepo;
+    private final ConversationPurgeService purgeService;
 
-    public ConversationService(ConversationRepo conversationRepo, UsersRepo usersRepo, ConversationMemberRepo conversationMemberRepo, ConversationMemberService memberService, MessagesRepo messagesRepo) {
+    public ConversationService(ConversationRepo conversationRepo, UsersRepo usersRepo, ConversationMemberRepo conversationMemberRepo, ConversationMemberService memberService, ConversationPurgeService purgeService) {
         this.conversationRepo = conversationRepo;
         this.usersRepo = usersRepo;
         this.conversationMemberRepo = conversationMemberRepo;
         this.memberService = memberService;
-        this.messagesRepo = messagesRepo;
+        this.purgeService = purgeService;
     }
     @Transactional
     public ConversationResponse createConversation(CreateConversationRequest request, Long creatorId) {
@@ -66,15 +65,17 @@ public class ConversationService {
         conversationMemberRepo.saveAll(membersToSave);
         return ConversationResponse.from(savedConversation);
     }
-    @Transactional(readOnly = true)
-    public ConversationResponse getConversation(Long id) {
-        return conversationRepo.findById(id).map(ConversationResponse::from).orElseThrow(() -> new ConversationNotFoundException("Không tìm thấy cuộc trò chuyện với mã " + id));
-    }
     @Transactional
     public void deleteByConversationId(Long id, Long currentUserId) {
+        // Take the member-row locks first: this path deletes messages then member rows, while
+        // leaveConversation locks member rows then deletes messages — without the shared
+        // first acquisition the two serialize in opposite orders and can deadlock.
+        conversationMemberRepo.findAllByConversationIdForUpdate(id);
         if (!conversationRepo.existsById(id)) throw new ConversationNotFoundException("Không tìm thấy cuộc trò chuyện với mã " + id);
         if (!memberService.isAdmin(id, currentUserId)) throw new AccessDeniedException("Bạn không có quyền làm việc này!");
-        messagesRepo.deleteByConversation_Id(id);
+        // Storage-aware purge: messages go first (mandatory FK, no DB cascade) and the stored
+        // attachment objects are removed after commit instead of leaking as orphans.
+        purgeService.purgeConversationData(id);
         conversationMemberRepo.deleteByConversation_Id(id);
         conversationRepo.deleteById(id);
     }
