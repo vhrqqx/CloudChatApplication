@@ -1,11 +1,5 @@
 import { create } from "zustand";
 
-
-
-
-
-
-
 const TYPING_TTL = 2500;
 
 export const useUi = create((set) => ({

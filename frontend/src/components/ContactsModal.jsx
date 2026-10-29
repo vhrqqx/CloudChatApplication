@@ -8,13 +8,6 @@ import { useFriends } from "../store/friends.js";
 import Avatar from "./Avatar.jsx";
 import { useUi } from "../store/ui.js";
 
-
-
-
-
-
-
-
 export default function ContactsModal({ open, onClose }) {
   const load = useFriends((s) => s.load);
   const accept = useFriends((s) => s.accept);
@@ -87,7 +80,6 @@ export default function ContactsModal({ open, onClose }) {
             </button>
           </div>
 
-          {                                 }
           <section aria-label="Lời mời kết bạn" className="mt-4">
             <p
               className="m-0 px-1"
@@ -172,7 +164,6 @@ export default function ContactsModal({ open, onClose }) {
             </div>
           </section>
 
-          {                        }
           <section aria-label="Bạn bè" className="mt-4">
             <p
               className="m-0 px-1"

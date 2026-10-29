@@ -1,10 +1,5 @@
 import { useEffect, useRef } from "react";
 
-
-
-
-
-
 export default function Dialog({ onClose, labelledById, width = 360, elevated = true, children }) {
   const panelRef = useRef(null);
 

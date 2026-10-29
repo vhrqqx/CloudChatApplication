@@ -6,17 +6,6 @@ import { useFriends } from "../store/friends.js";
 import { useUi } from "../store/ui.js";
 import Avatar from "./Avatar.jsx";
 
-
-
-
-
-
-
-
-
-
-
-
 export default function ProfileCard({ open, onClose, userId, username, sourceConversationId }) {
   const create = useChat((s) => s.create);
   const select = useChat((s) => s.select);
@@ -102,13 +91,12 @@ export default function ProfileCard({ open, onClose, userId, username, sourceCon
           >
             {username ?? `Người dùng #${userId}`}
           </p>
-          {                                                                         }
+
           <p className="m-0" style={{ fontSize: "11px", color: "var(--text-secondary)" }}>
             {otherOnline ? "Đang hoạt động" : `Mã tài khoản #${userId}`}
           </p>
         </div>
 
-        {                                             }
         <button
           type="button"
           disabled={busy || relationNow === "outgoing"}

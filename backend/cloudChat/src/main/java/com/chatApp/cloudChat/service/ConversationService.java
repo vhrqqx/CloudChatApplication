@@ -49,7 +49,6 @@ public class ConversationService {
             throw new IllegalArgumentException("Đây là hộp thoại tin nhắn riêng, chỉ có thể có bạn và người nhận!");
         }
 
-
         if (!otherUserIds.isEmpty()) {
             List<Long> notFriends = friendService.filterNonFriends(creatorId, java.util.List.copyOf(otherUserIds));
             if (!notFriends.isEmpty()) {

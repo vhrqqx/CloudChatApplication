@@ -1,8 +1,3 @@
-
-
-
-
-
 import { Client } from "@stomp/stompjs";
 
 const BASE = "http://localhost:8080/api/v1";
@@ -51,7 +46,6 @@ async function connectStomp(token) {
   });
 }
 
-
 function waitFrame(client, destination, predicate, timeoutMs = 7000) {
   return new Promise((resolve, reject) => {
     const sub = client.subscribe(destination, (m) => {
@@ -91,7 +85,6 @@ async function main() {
     ids[u.username] = r.json?.user?.id;
   }
   log(tokens.Nam && tokens.Trang && tokens.Hung && tokens.Mai, "login 4 users");
-
 
   const selfReq = await req("/friend-request", {
     method: "POST", token: tokens.Nam, body: { receiverId: ids.Nam },
@@ -144,7 +137,6 @@ async function main() {
     "contacts(Nam): friends có Trang, outgoing rỗng",
   );
 
-
   const badDirect = await req("/conversation", {
     method: "POST", token: tokens.Nam, body: { conversationType: "DIRECT", memberId: [ids.Hung] },
   });
@@ -167,8 +159,6 @@ async function main() {
   });
   log(addNotFriend.status === 403, "thêm CHƯA-kết-bạn vào nhóm → 403", `HTTP ${addNotFriend.status}`);
 
-
-
   const r2 = await req("/friend-request", {
     method: "POST", token: tokens.Trang, body: { receiverId: ids.Hung },
   });
@@ -186,7 +176,6 @@ async function main() {
     body: { receiverId: ids.Hung, sourceConversationId: groupId2 },
   });
 
-
   const reqId3 = Number(srcBlocked.text);
   log(srcBlocked.status === 201, "Nam mời Hung QUA NHÓM (cả hai là thành viên) → 201", `HTTP ${srcBlocked.status}, id=${srcBlocked.text}`);
 
@@ -200,7 +189,6 @@ async function main() {
     "contacts(Hung): lời mời có nguồn nhóm + sourceName đúng",
     inc?.sourceName ?? "không có",
   );
-
 
   const hungWs = await connectStomp(tokens.Hung);
   const sendRest4 = Promise.resolve().then(async () => {
@@ -232,7 +220,6 @@ async function main() {
     log(false, `WS contacts frame request — ${e.message}`);
   }
 
-
   const namWs = await connectStomp(tokens.Nam);
   try {
     const acceptRest = Promise.resolve(
@@ -254,7 +241,6 @@ async function main() {
     namFriends?.friends?.some((f) => String(f.userId) === String(ids.Hung)),
     "sau accept: Nam friends có Hung",
   );
-
 
   try {
     const msg = await req(`/message?conversationId=${groupId2}`, {
@@ -278,7 +264,6 @@ async function main() {
   } catch (e) {
     log(false, `WS messageDeleted frame — ${e.message}`);
   }
-
 
   const rMai = await req("/friend-request", {
     method: "POST", token: tokens.Nam, body: { receiverId: ids.Mai },

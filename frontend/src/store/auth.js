@@ -50,7 +50,6 @@ const useAuth = create((set, get) => ({
   },
 }));
 
-
 setAuthRef(useAuth);
 
 export { useAuth };

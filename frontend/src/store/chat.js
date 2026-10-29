@@ -5,7 +5,6 @@ import { syncConversations } from "../lib/ws.js";
 
 const PAGE_SIZE = 50;
 
-
 export const ATTACHMENT_PREFIX = "[File:";
 export function attachmentNameOf(content) {
   if (typeof content !== "string") return null;
@@ -13,13 +12,6 @@ export function attachmentNameOf(content) {
   const name = content.slice(ATTACHMENT_PREFIX.length, -1);
   return name || null;
 }
-
-
-
-
-
-
-
 
 export const useChat = create((set, get) => ({
   status: "idle",
@@ -67,7 +59,6 @@ export const useChat = create((set, get) => ({
     }
   },
 
-
   patchFromMembers(id, members, last) {
     const myId = useAuth.getState().user?.id;
     const mine = members.find((m) => m.id === myId);
@@ -100,7 +91,6 @@ export const useChat = create((set, get) => ({
     }));
   },
 
-
   async refreshMembers(id, { withPreview = false } = {}) {
     const [membersR, previewR] = await Promise.allSettled([
       api(`/conversation-member?conversationId=${id}`),
@@ -111,7 +101,6 @@ export const useChat = create((set, get) => ({
     const last = previewR.status === "fulfilled" ? (previewR.value?.content?.[0] ?? undefined) : undefined;
     get().patchFromMembers(id, members, last);
   },
-
 
   async loadMessages(id) {
     const key = String(id);
@@ -147,10 +136,6 @@ export const useChat = create((set, get) => ({
       }));
     }
   },
-
-
-
-
 
   async loadOlder(id) {
     const key = String(id);
@@ -189,14 +174,6 @@ export const useChat = create((set, get) => ({
       return false;
     }
   },
-
-
-
-
-
-
-
-
 
   async refreshLatest(id) {
     const key = String(id);
@@ -237,7 +214,6 @@ export const useChat = create((set, get) => ({
         };
       });
 
-
       const last = fresh[fresh.length - 1];
       if (last) {
         set((s) => ({
@@ -252,13 +228,6 @@ export const useChat = create((set, get) => ({
 
     }
   },
-
-
-
-
-
-
-
 
   async sendAttachment(id, file, { onProgress } = {}) {
     const att = await uploadFile(id, file, { onProgress });
@@ -302,8 +271,6 @@ export const useChat = create((set, get) => ({
     return att;
   },
 
-
-
   async editMessage(id, messageId, content) {
     const res = await api(`/message/${messageId}`, { method: "PATCH", body: { content } });
     const key = String(id);
@@ -337,11 +304,6 @@ export const useChat = create((set, get) => ({
     return res;
   },
 
-
-
-
-
-
   async deleteMessage(id, messageId) {
     const myId = useAuth.getState().user?.id;
     const myName = useAuth.getState().user?.username;
@@ -353,7 +315,6 @@ export const useChat = create((set, get) => ({
       deleterName: myName,
     });
   },
-
 
   applyDeleted(ev) {
     if (!ev?.messageId || ev?.conversationId == null) return;
@@ -400,9 +361,6 @@ export const useChat = create((set, get) => ({
     });
   },
 
-
-
-
   renameMyself(newName) {
     const prevName = useAuth.getState().user?.username;
     const myId = useAuth.getState().user?.id;
@@ -430,10 +388,6 @@ export const useChat = create((set, get) => ({
     }));
   },
 
-
-
-
-
   applyIncoming(msg) {
     if (!msg?.conversationId || !msg?.id) return;
     const key = String(msg.conversationId);
@@ -449,7 +403,6 @@ export const useChat = create((set, get) => ({
         );
         s.messages = { ...s.messages, [key]: { status: "ready", list } };
       }
-
 
       const idx = s.items.findIndex((i) => String(i.id) === key);
       if (idx >= 0) {
@@ -467,7 +420,6 @@ export const useChat = create((set, get) => ({
     });
   },
 
-
   markRead(id) {
     const key = String(id);
     set((s) => ({
@@ -476,7 +428,6 @@ export const useChat = create((set, get) => ({
       ),
     }));
   },
-
 
   async create({ conversationType = "DIRECT", memberId }) {
     const conv = await api("/conversation", {
@@ -487,7 +438,6 @@ export const useChat = create((set, get) => ({
     if (conv?.id) set({ selectedId: conv.id });
     return conv;
   },
-
 
   async remove(id) {
     await api(`/conversation/${id}`, { method: "DELETE" });
@@ -502,7 +452,6 @@ export const useChat = create((set, get) => ({
     syncConversations(get().items.map((i) => i.id));
   },
 
-
   async leave(id) {
     await api(`/conversation-member/me?conversationId=${id}`, { method: "DELETE" });
     set((s) => {
@@ -515,8 +464,6 @@ export const useChat = create((set, get) => ({
     });
     syncConversations(get().items.map((i) => i.id));
   },
-
-
 
   async addMember(id, userId) {
     await api(`/conversation-member?conversationId=${id}`, {

@@ -10,22 +10,11 @@ import { useUi } from "./store/ui.js";
 import { start, stop, setWsListeners, translateWsError } from "./lib/ws.js";
 import { getToken } from "./lib/api.js";
 
-
-
-
-
-
-
-
-
-
-
 export default function App() {
   const status = useAuth((s) => s.status);
   const init = useAuth((s) => s.init);
   const myIdRef = useRef(null);
   myIdRef.current = useAuth((s) => s.user?.id);
-
 
   useEffect(() => {
     setWsListeners({
@@ -63,7 +52,6 @@ export default function App() {
     if (status === "guest") useChat.getState().reset();
   }, [status]);
 
-
   useEffect(() => {
     if (status === "authed") {
       start(getToken());
@@ -72,7 +60,6 @@ export default function App() {
       useUi.getState().setWsState("idle");
     }
   }, [status]);
-
 
   useEffect(() => {
     if (status === "authed") useFriends.getState().load().catch(() => {});
@@ -107,8 +94,6 @@ export default function App() {
     </div>
   );
 }
-
-
 
 function FlashBanner() {
   const flash = useUi((s) => s.flash);

@@ -6,17 +6,6 @@ import { useFriends } from "../store/friends.js";
 import Avatar from "./Avatar.jsx";
 import Dialog from "./Dialog.jsx";
 
-
-
-
-
-
-
-
-
-
-
-
 export default function CreateConversationModal({ open, onClose }) {
   const myId = useAuth((s) => s.user?.id);
   const create = useChat((s) => s.create);
@@ -42,7 +31,6 @@ export default function CreateConversationModal({ open, onClose }) {
 
   if (!open) return null;
 
-
   const users = friends.filter((f) => String(f.userId) !== String(myId));
 
   const q = query.trim().toLowerCase();
@@ -60,7 +48,6 @@ export default function CreateConversationModal({ open, onClose }) {
       return next;
     });
   }
-
 
   function findExistingDirect(userActorId) {
     const conv = items.find(
@@ -124,7 +111,6 @@ export default function CreateConversationModal({ open, onClose }) {
           </button>
         </div>
 
-        {                                                           }
         <div className="mt-4 flex gap-2" role="radiogroup" aria-label="Loại cuộc trò chuyện">
           {[
             { key: "DIRECT", label: "Tin nhắn riêng" },
@@ -156,7 +142,6 @@ export default function CreateConversationModal({ open, onClose }) {
           ))}
         </div>
 
-        {                                                                             }
         {mode === "GROUP" && selectedUsernames.length > 0 && (
           <p className="mt-3 mb-0" style={{ fontSize: "12px", color: "var(--text-secondary)" }}>
             Nhóm của: <span style={{ color: "var(--text-primary)", fontWeight: 600 }}>

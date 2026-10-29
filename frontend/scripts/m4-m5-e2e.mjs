@@ -1,8 +1,3 @@
-
-
-
-
-
 const BASE = "http://localhost:8080/api/v1";
 const results = [];
 
@@ -45,7 +40,6 @@ async function main() {
   }
   log(tokens.Nam && tokens.Trang, "login 4 users", `ids: Nam=${ids.Nam} Trang=${ids.Trang} Hung=${ids.Hung} Mai=${ids.Mai}`);
 
-
   const pairs = [
     ["Nam", "Trang"], ["Nam", "Hung"], ["Trang", "Hung"], ["Trang", "Mai"],
   ];
@@ -73,7 +67,6 @@ async function main() {
     }
   }
 
-
   const group = await req("/conversation", {
     method: "POST", token: tokens.Nam,
     body: { conversationType: "GROUP", memberId: [ids.Trang, ids.Hung] },
@@ -82,30 +75,25 @@ async function main() {
   log(!!groupId && group.json?.conversationType === "GROUP", "tạo GROUP", `id=${groupId}`);
   log(group.status === 200 || group.status === 201, "POST /conversation GROUP", `HTTP ${group.status}`);
 
-
   let members = (await req(`/conversation-member?conversationId=${groupId}`, { token: tokens.Nam })).json;
   log(members?.find((m) => m.id === ids.Nam)?.role === "ADMIN", "creator là ADMIN");
   log(members?.find((m) => m.id === ids.Trang)?.role === "MEMBER", "member thêm vào là MEMBER");
   log(members?.length === 3, "3 thành viên sau tạo", `count=${members?.length}`);
-
 
   const addMai = await req(`/conversation-member?conversationId=${groupId}`, {
     method: "POST", token: tokens.Trang, body: { userId: ids.Mai },
   });
   log(addMai.status === 201, "Trang (MEMBER) thêm Mai được — isMember rule", `HTTP ${addMai.status}`);
 
-
   const blockedChange = await req(`/conversation-member/${ids.Hung}?conversationId=${groupId}`, {
     method: "PATCH", token: tokens.Trang, body: { role: "ADMIN" },
   });
   log(blockedChange.status === 403, "Trang (MEMBER) đổi role bị chặn 403", `HTTP ${blockedChange.status}`);
 
-
   const blockedKick = await req(`/conversation-member/${ids.Hung}?conversationId=${groupId}`, {
     method: "DELETE", token: tokens.Mai,
   });
   log(blockedKick.status === 403, "Mai (MEMBER) xóa thành viên bị chặn 403", `HTTP ${blockedKick.status}`);
-
 
   const promote = await req(`/conversation-member/${ids.Hung}?conversationId=${groupId}`, {
     method: "PATCH", token: tokens.Nam, body: { role: "ADMIN" },
@@ -116,12 +104,10 @@ async function main() {
   });
   log(demote.status === 200 && demote.json?.role === "MEMBER", "gỡ quyền Hung → MEMBER", `HTTP ${demote.status}`);
 
-
   const lastAdmin = await req(`/conversation-member/${ids.Nam}?conversationId=${groupId}`, {
     method: "PATCH", token: tokens.Nam, body: { role: "MEMBER" },
   });
   log(lastAdmin.status >= 400, "last-admin guard: Nam không tự gỡ được quyền duy nhất", `HTTP ${lastAdmin.status}`);
-
 
   const kick = await req(`/conversation-member/${ids.Mai}?conversationId=${groupId}`, {
     method: "DELETE", token: tokens.Nam,
@@ -129,7 +115,6 @@ async function main() {
   log(kick.status === 204, "Nam xóa Mai khỏi nhóm", `HTTP ${kick.status}`);
   members = (await req(`/conversation-member?conversationId=${groupId}`, { token: tokens.Nam })).json;
   log(members?.length === 3, "3 thành viên sau khi kick", `count=${members?.length}`);
-
 
   for (let i = 1; i <= 60; i++) {
     const r = await req(`/message?conversationId=${groupId}`, {
@@ -139,24 +124,20 @@ async function main() {
   }
   log(true, "gửi 60 tin REST");
 
-
   let page0 = (await req(`/message?conversationId=${groupId}&page=0&size=50`, { token: tokens.Nam })).json;
   const p0 = page0?.content ?? [];
   log(p0.length === 50, "page0 size=50 → 50 item", `count=${p0.length}`);
   log(p0[0]?.id > p0[49]?.id, "page0 sort DESC (mới nhất đầu)", `first=${p0[0]?.content} last=${p0[49]?.content}`);
-
 
   let page1 = (await req(`/message?conversationId=${groupId}&page=1&size=50`, { token: tokens.Nam })).json;
   const p1 = page1?.content ?? [];
   log(p1.length === 10, "page1 → 10 tin còn lại", `count=${p1.length}`);
   log(p1[0]?.id < p0[49]?.id, "page1 là tin cũ hơn page0");
 
-
   const maiLeave = await req(`/conversation-member/me?conversationId=${groupId}`, {
     method: "DELETE", token: tokens.Mai,
   });
   log(maiLeave.status >= 400, "Mai (đã bị kick) rời → chặn", `HTTP ${maiLeave.status}`);
-
 
   console.log(results.join("\n"));
   const fails = results.filter((r) => r.startsWith("FAIL"));

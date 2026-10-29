@@ -19,19 +19,16 @@ public interface FriendRequestRepo extends JpaRepository<FriendRequest, Long> {
 
     List<FriendRequest> findBySender_IdAndStatus(Long senderId, FriendStatus status);
 
-
     @Query("select (count(f) > 0) from FriendRequest f "
             + "where (f.sender.id = :a and f.receiver.id = :b) "
             + "   or (f.sender.id = :b and f.receiver.id = :a)")
     boolean existsBetween(@Param("a") Long a, @Param("b") Long b);
-
 
     @Query("select (count(f) > 0) from FriendRequest f "
             + "where f.status = com.chatApp.cloudChat.model.FriendStatus.ACCEPTED "
             + "  and ((f.sender.id = :a and f.receiver.id = :b) "
             + "    or (f.sender.id = :b and f.receiver.id = :a))")
     boolean existsAcceptedBetween(@Param("a") Long a, @Param("b") Long b);
-
 
     @Query("select f from FriendRequest f "
             + "where f.status = com.chatApp.cloudChat.model.FriendStatus.ACCEPTED "

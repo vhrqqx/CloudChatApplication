@@ -5,12 +5,6 @@ import RailAvatar from "./RailAvatar.jsx";
 import ContactsModal from "./ContactsModal.jsx";
 import { useFriends } from "../store/friends.js";
 
-
-
-
-
-
-
 export default function Rail() {
   const [contactsOpen, setContactsOpen] = useState(false);
   const pending = useFriends((s) => s.incoming.length);

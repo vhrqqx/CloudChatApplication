@@ -1,20 +1,5 @@
 import { Client } from "@stomp/stompjs";
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 const TOPIC_PREFIX = "/topic/conversation/";
 
 const state = {
@@ -83,7 +68,6 @@ function unsubscribeConversation(id) {
   state.convIds.delete(key);
 }
 
-
 export function syncConversations(ids = []) {
   const wanted = new Set(ids.map(String));
   for (const id of [...state.convIds]) {
@@ -91,7 +75,6 @@ export function syncConversations(ids = []) {
   }
   for (const id of wanted) subscribeConversation(id);
 }
-
 
 export function ensureConversation(id) {
   subscribeConversation(id);
@@ -166,7 +149,6 @@ export function stop() {
   emitState("disconnected");
 }
 
-
 function canPublish() {
   const c = state.client;
   return Boolean(c && c.connected && c.active);
@@ -186,7 +168,6 @@ export function sendTyping(conversationId) {
   if (!canPublish()) return;
   state.client.publish({ destination: `/app/typing/${conversationId}` });
 }
-
 
 export function translateWsError(err) {
   const m = err?.message ?? "";

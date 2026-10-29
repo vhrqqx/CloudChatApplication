@@ -14,12 +14,6 @@ import com.chatApp.cloudChat.event.MessageDeletedEvent;
 import com.chatApp.cloudChat.model.User;
 import com.chatApp.cloudChat.repository.UsersRepo;
 
-
-
-
-
-
-
 @Component
 public class OutboundRelay {
 

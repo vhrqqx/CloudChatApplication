@@ -4,12 +4,6 @@ import Avatar from "./Avatar.jsx";
 import { formatChatListTime } from "../lib/time.js";
 import { useUi } from "../store/ui.js";
 
-
-
-
-
-
-
 export default function ConversationItem({
   item,
   active,
@@ -39,11 +33,8 @@ export default function ConversationItem({
 
   const isAdmin = item.role === "ADMIN";
 
-
   const action = isAdmin ? "delete" : item.type === "GROUP" ? "leave" : null;
   const preview = item.preview ?? "Chưa có tin nhắn nào";
-
-
 
   const otherId = item.type === "DIRECT" ? item.others?.[0]?.id : null;
   const otherOnline = otherId != null && presence[String(otherId)] === true;
@@ -72,7 +63,7 @@ export default function ConversationItem({
           ringToken="--bg-list"
         />
         <span className="min-w-0 flex-1">
-          {                            }
+
           <span className="flex w-full items-center justify-between gap-2">
             <span
               className="truncate"
@@ -91,7 +82,7 @@ export default function ConversationItem({
               {formatChatListTime(item.previewAt)}
             </span>
           </span>
-          {                                                              }
+
           <span className="mt-0.5 flex w-full items-center gap-2 text-left">
             <span
               className={`truncate flex-1 ${unread ? "min-w-0" : "block"}`}
@@ -124,7 +115,6 @@ export default function ConversationItem({
         </span>
       </button>
 
-      {                                                                                  }
       {action && (
         <div ref={menuWrapRef} className="absolute right-1.5 top-1.5">
         <button

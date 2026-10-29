@@ -66,7 +66,6 @@ public class ConversationMemberService {
             throw new IllegalArgumentException("Người dùng đã là thành viên của cuộc trò chuyện");
         }
 
-
         if (!friendService.areFriends(currentUserId, request.userId())) {
             throw new AccessDeniedException("Chỉ có thể thêm bạn bè vào nhóm — hãy kết bạn qua nhóm này trước.");
         }

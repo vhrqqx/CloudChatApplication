@@ -9,17 +9,6 @@ import { useAuth } from "../../store/auth.js";
 import { useFriends } from "../../store/friends.js";
 import { useUi } from "../../store/ui.js";
 
-
-
-
-
-
-
-
-
-
-
-
 export default function MemberPanel({ conv }) {
   const myId = useAuth((s) => s.user?.id);
   const members = useChat((s) => s.members[String(conv.id)]);
@@ -38,13 +27,10 @@ export default function MemberPanel({ conv }) {
   const [profileFor, setProfileFor] = useState(null);
   const menuWrapRef = useRef(null);
 
-
-
   useEffect(() => {
     if (conv.type !== "GROUP") return;
     refreshMembers(conv.id).catch(() => {});
   }, [conv.id, conv.type]);
-
 
   useEffect(() => {
     if (!menuFor) return;
@@ -92,7 +78,7 @@ export default function MemberPanel({ conv }) {
       </div>
 
       <div className="flex-1 overflow-y-auto p-3">
-        {                                                                       }
+
         {!isGroup && conv.others?.[0] && String(conv.others[0].id) !== String(myId) && (
           <div className="flex flex-col items-center gap-2 pt-6">
             <button
@@ -129,7 +115,6 @@ export default function MemberPanel({ conv }) {
           </div>
         )}
 
-        {                                                               }
         {isGroup && (
           <ul className="m-0 flex list-none flex-col gap-1 p-0">
             {(members ?? []).map((m) => (
@@ -138,9 +123,7 @@ export default function MemberPanel({ conv }) {
                 className="group relative flex items-center gap-3 px-2 py-2"
                 style={{ borderRadius: "var(--radius-sm)" }}
               >
-                {
 
-                                                                              }
                 {String(m.id) !== String(myId) ? (
                   <button
                     type="button"
@@ -234,7 +217,6 @@ export default function MemberPanel({ conv }) {
                   </span>
                 </span>
 
-                {                                                              }
                 {isAdmin && String(m.id) !== String(myId) && (
                   <div ref={m.id === menuFor ? menuWrapRef : undefined} className="relative">
                     <button
@@ -293,7 +275,6 @@ export default function MemberPanel({ conv }) {
           </ul>
         )}
 
-        {                                                                    }
         {isGroup && (
           <button
             type="button"
@@ -307,7 +288,6 @@ export default function MemberPanel({ conv }) {
         )}
       </div>
 
-      {                                                 }
       {isGroup && (
         <div className="shrink-0 border-t p-3" style={{ borderColor: "var(--border)" }}>
           <button
@@ -388,11 +368,6 @@ export default function MemberPanel({ conv }) {
   );
 }
 
-
-
-
-
-
 function AddMemberDialog({ open, conv, onClose, onAdd }) {
   const myId = useAuth((s) => s.user?.id);
   const members = useChat((s) => s.members[String(conv.id)]);
@@ -413,7 +388,6 @@ function AddMemberDialog({ open, conv, onClose, onAdd }) {
   }, [open, friendsStatus, loadFriends]);
 
   if (!open) return null;
-
 
   const memberIds = new Set((members ?? []).map((m) => String(m.id)));
   const users = friends.filter(

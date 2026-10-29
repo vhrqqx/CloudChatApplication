@@ -1,11 +1,5 @@
-
-
-
-
-
 :root {
   color-scheme: light;
-
 
   --bg-rail: #efeeec;
   --bg-list: #f5f5f4;
@@ -13,20 +7,15 @@
   --bg-item-hover: #eae9e6;
   --bg-item-active: #eae9e6;
 
-
-
   --text-primary: #1a1a1a;
   --text-secondary: #57534e;
 
-
   --border: #e7e5e4;
-
 
   --accent: #18181b;
   --on-accent: #ffffff;
   --presence: #0f766e;
   --destructive: #dc2626;
-
 
   --bubble-me-bg: #27272a;
   --bubble-me-text: #fafafa;
@@ -35,15 +24,12 @@
   --bubble-them-text: #1a1a1a;
   --bubble-them-border: #e7e5e4;
 
-
   --radius-sm: 4px;
   --radius-md: 8px;
   --radius-bubble: 10px;
 
-
   --font-sans:
     "Plus Jakarta Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
-
 
   --focus-ring:
     0 0 0 2px var(--bg-chat), 0 0 0 4px var(--accent);

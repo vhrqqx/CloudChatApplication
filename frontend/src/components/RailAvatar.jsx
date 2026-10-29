@@ -3,11 +3,6 @@ import Avatar from "./Avatar.jsx";
 import ProfileModal from "./ProfileModal.jsx";
 import { useAuth } from "../store/auth.js";
 
-
-
-
-
-
 export default function RailAvatar() {
   const username = useAuth((s) => s.user?.username);
   const [open, setOpen] = useState(false);

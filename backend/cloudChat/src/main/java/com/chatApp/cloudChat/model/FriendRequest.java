@@ -17,15 +17,6 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 
-
-
-
-
-
-
-
-
-
 @Entity
 @Table(name = "friend_requests", uniqueConstraints = @UniqueConstraint(
         name = "uk_friend_request_sender_receiver",

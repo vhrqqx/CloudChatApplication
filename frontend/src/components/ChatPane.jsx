@@ -8,13 +8,6 @@ import MessageList from "./chat/MessageList.jsx";
 import Composer from "./chat/Composer.jsx";
 import MemberPanel from "./chat/MemberPanel.jsx";
 
-
-
-
-
-
-
-
 export default function ChatPane() {
   const selectedId = useChat((s) => s.selectedId);
   const conv = useChat((s) => s.items.find((i) => i.id === s.selectedId));
@@ -33,7 +26,6 @@ export default function ChatPane() {
     if (!useChat.getState().messages[String(selectedId)]) {
       useChat.getState().loadMessages(selectedId);
     } else {
-
 
       useChat.getState().refreshLatest(selectedId);
     }
@@ -73,9 +65,7 @@ export default function ChatPane() {
         panelOpen={panelOpen}
         onTogglePanel={() => setPanelOpen((v) => !v)}
       />
-      {
 
-                                          }
       <div className="flex min-h-0 flex-1">
         <div className="flex min-w-0 flex-1 flex-col">
           <MessageList conv={conv} messagesEntry={messagesEntry} myId={myId} onLoadOlder={loadOlder} />

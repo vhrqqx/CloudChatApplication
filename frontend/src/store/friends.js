@@ -1,13 +1,6 @@
 import { create } from "zustand";
 import { api } from "../lib/api.js";
 
-
-
-
-
-
-
-
 export const useFriends = create((set, get) => ({
   status: "idle",
   error: null,
@@ -84,14 +77,9 @@ export const useFriends = create((set, get) => ({
     set((s) => ({ outgoing: s.outgoing.filter((r) => r.requestId !== requestId) }));
   },
 
-
   reset() {
     set({ status: "idle", error: null, friends: [], incoming: [], outgoing: [], loadedOnce: false });
   },
-
-
-
-
 
   applyEvent(ev) {
     if (!ev || ev.targetId == null) return;
@@ -136,7 +124,6 @@ export const useFriends = create((set, get) => ({
     }
   },
 }));
-
 
 function useAuthId() {
   try {

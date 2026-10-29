@@ -15,22 +15,6 @@ import { formatBubbleTime } from "../../lib/time.js";
 import { useChat, attachmentNameOf } from "../../store/chat.js";
 import { useUi } from "../../store/ui.js";
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 const CLUSTER_WINDOW_MS = 2 * 60 * 1000;
 const SCROLL_EDGE = 60;
 const MAX_FILE_BYTES = 50 * 1024 * 1024;
@@ -42,12 +26,9 @@ function formatBytes(n) {
   return `${(n / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-
-
 const thumbCache = new Map();
 
 function loadBlob(downloadUrl) {
-
 
   const path = String(downloadUrl).replace(/^\/api\/v1/, "");
   return apiBinary(path);
@@ -63,7 +44,6 @@ function triggerDownload(blob, filename) {
   a.remove();
   setTimeout(() => URL.revokeObjectURL(url), 4000);
 }
-
 
 function AttachmentImage({ attachment, alt, onOpenFull }) {
   const [src, setSrc] = useState(thumbCache.get(attachment.id) ?? null);
@@ -131,7 +111,6 @@ function AttachmentImage({ attachment, alt, onOpenFull }) {
   );
 }
 
-
 function ImageViewer({ attachment, onClose }) {
   const [src, setSrc] = useState(null);
   const [error, setError] = useState(null);
@@ -186,7 +165,6 @@ function ImageViewer({ attachment, onClose }) {
     </Dialog>
   );
 }
-
 
 function FileCard({ attachment, downloadable, onErrorFlash }) {
   const [busy, setBusy] = useState(false);
@@ -266,8 +244,6 @@ function FileCard({ attachment, downloadable, onErrorFlash }) {
   );
 }
 
-
-
 function BubbleRow({ msg, conv, myId, spacingTop, showMeta }) {
   const isMine = String(msg.senderId) === String(myId);
   const flashError = useUi.getState().flashError;
@@ -277,7 +253,6 @@ function BubbleRow({ msg, conv, myId, spacingTop, showMeta }) {
   const [viewer, setViewer] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const taRef = useRef(null);
-
 
   const tomb = msg.deletedInfo;
   const attName = attachmentNameOf(msg.content);
@@ -330,7 +305,6 @@ function BubbleRow({ msg, conv, myId, spacingTop, showMeta }) {
       {isMine && msg.editedAt ? " (đã chỉnh sửa)" : ""}
     </span>
   );
-
 
   if (editing) {
     return (
@@ -414,7 +388,6 @@ function BubbleRow({ msg, conv, myId, spacingTop, showMeta }) {
     );
   }
 
-
   return (
     <div
       className={`flex flex-col ${isMine ? "items-end" : "items-start"}`}
@@ -440,10 +413,7 @@ function BubbleRow({ msg, conv, myId, spacingTop, showMeta }) {
         )}
 
         <div className="group relative min-w-0" style={{ maxWidth: "68%" }}>
-          {
 
-
-                                                                               }
           {isMine && !tomb && (
             <div
               className="absolute right-full top-1/2 z-10 flex -translate-y-1/2 items-center pr-1.5 opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100"
@@ -611,14 +581,11 @@ export default function MessageList({
   const hasMore = messagesEntry?.hasMore ?? false;
   const loadingOlder = messagesEntry?.loadingOlder ?? false;
 
-
-
   useEffect(() => {
     if (anchorRef.current) return;
     const el = scrollerRef.current;
     if (el && nearBottomRef.current) el.scrollTop = el.scrollHeight;
   }, [list]);
-
 
   useEffect(() => {
     if (messagesEntry?.status === "ready") {
@@ -627,7 +594,6 @@ export default function MessageList({
       if (el) el.scrollTop = el.scrollHeight;
     }
   }, [messagesEntry?.status]);
-
 
   useEffect(() => {
     if (!anchorRef.current) return;

@@ -1,10 +1,6 @@
 import { useState } from "react";
 import Dialog from "./Dialog.jsx";
 
-
-
-
-
 export default function ConfirmDialog({
   open,
   title,

@@ -27,14 +27,6 @@ import com.chatApp.cloudChat.repository.ConversationRepo;
 import com.chatApp.cloudChat.repository.FriendRequestRepo;
 import com.chatApp.cloudChat.repository.UsersRepo;
 
-
-
-
-
-
-
-
-
 @Service
 public class FriendService {
 
@@ -141,7 +133,6 @@ public class FriendService {
                 "requestId", requestId));
     }
 
-
     @Transactional
     public void cancel(Long senderId, Long requestId) {
         FriendRequest fr = friendRepo.findById(requestId)
@@ -186,12 +177,10 @@ public class FriendService {
         return new ContactsResponse(friends, incoming, outgoing);
     }
 
-
     @Transactional(readOnly = true)
     public boolean areFriends(Long a, Long b) {
         return friendRepo.existsAcceptedBetween(a, b);
     }
-
 
     @Transactional(readOnly = true)
     public List<Long> filterNonFriends(Long userId, List<Long> candidateIds) {
@@ -207,8 +196,6 @@ public class FriendService {
         return friendRepo.findAcceptedOf(userId).size();
     }
 
-
-
     private void publish(String kind, Long targetId, Map<String, Object> extra) {
         Map<String, Object> payload = new HashMap<>();
         payload.put("kind", kind);
@@ -216,10 +203,6 @@ public class FriendService {
         payload.putAll(extra);
         eventPublisher.publishEvent(new ContactEvent(payload));
     }
-
-
-
-
 
     private String conversationName(Long conversationId) {
         List<Long> userIds = memberRepo.findByConversation_Id(conversationId).stream()

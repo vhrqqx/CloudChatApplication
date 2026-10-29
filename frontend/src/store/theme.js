@@ -9,7 +9,6 @@ export function applyTheme(theme) {
   document.documentElement.dataset.theme = theme;
 }
 
-
 export function initTheme() {
   let saved = null;
   try {

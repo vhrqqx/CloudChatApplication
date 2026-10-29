@@ -1,8 +1,3 @@
-
-
-
-
-
 const BASE = "http://localhost:8080/api/v1";
 const results = [];
 
@@ -48,7 +43,6 @@ async function main() {
   }
   log(tokens.Nam && tokens.Trang && tokens.Hung && tokens.Mai, "login 4 users");
 
-
   const group = await req("/conversation", {
     method: "POST",
     token: tokens.Nam,
@@ -57,7 +51,6 @@ async function main() {
   const groupId = group.json?.id;
   log(Boolean(groupId), "GROUP sẵn sàng", `id=${groupId}`);
 
-
   const textMsg = await req(`/message?conversationId=${groupId}`, {
     method: "POST",
     token: tokens.Nam,
@@ -65,8 +58,6 @@ async function main() {
   });
   const mid = textMsg.json?.id;
   log(textMsg.status === 201 && Boolean(mid), "tạo tin TEXT gốc", `id=${mid}`);
-
-
 
   const pngBytes = Buffer.from(
     "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP0z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
@@ -91,9 +82,7 @@ async function main() {
     JSON.stringify(att),
   );
 
-
   log(up.status === 201, "Trang (MEMBER) upload được — isMember rule", `HTTP ${up.status}`);
-
 
   let page = (await req(`/message?conversationId=${groupId}&page=0&size=50`, { token: tokens.Nam })).json;
   const attMsg = (page?.content ?? []).find((m) => m.content === "[File:anh-test.png]");
@@ -102,7 +91,6 @@ async function main() {
     "upload tạo Message [File:anh-test.png]",
     attMsg ? `msgId=${attMsg.id}` : "không thấy",
   );
-
 
   const editOther = await req(`/message/${mid}?conversationId=${groupId}`, {
     method: "PATCH",
@@ -132,7 +120,6 @@ async function main() {
   });
   log(editAtt.status === 400, "sửa tin đính kèm bị chặn 400", `HTTP ${editAtt.status}`);
 
-
   const dl = await fetch(att?.downloadUrl ? BASE.slice(0, -7) + att.downloadUrl : `${BASE}/attachment/${att?.id}/download`, {
     headers: { Authorization: `Bearer ${tokens.Nam}` },
   });
@@ -147,7 +134,6 @@ async function main() {
   const dlNoAuth = await fetch(`${BASE}/attachment/${att?.id}/download`);
   log(dlNoAuth.status === 401, "download không token → 401", `HTTP ${dlNoAuth.status}`);
 
-
   const mz = new FormData();
   mz.append("file", new Blob([Buffer.from("4d5a90000300000004000000ffff", "hex")], { type: "application/octet-stream" }), "virus.exe");
   const bad = await fetch(`${BASE}/attachment?conversationId=${groupId}`, {
@@ -157,13 +143,11 @@ async function main() {
   });
   log(bad.status === 400, "upload .exe bị từ chối 400", `HTTP ${bad.status}, msg: ${(await bad.json().catch(() => null))?.message}`);
 
-
   const delAtt = await req(`/attachment/${att?.id}?conversationId=${groupId}`, {
     method: "DELETE",
     token: tokens.Nam,
   });
   log(delAtt.status === 204, "ADMIN xóa tệp của thành viên khác 204", `HTTP ${delAtt.status}`);
-
 
   const delForeign = await req(`/message/${mid}`, {
     method: "DELETE",
@@ -183,14 +167,12 @@ async function main() {
   });
   log(editDeleted.status === 404, "sửa tin đã xóa → 404", `HTTP ${editDeleted.status}`);
 
-
   const rename = await req("/user/me", { method: "PATCH", token: tokens.Nam, body: { username: "Nam Hung" } });
   log(rename.status === 200 && rename.json?.username === "Nam Hung", "PATCH /user/me đổi tên 200", `HTTP ${rename.status}`);
 
   const renameLong = await req("/user/me", { method: "PATCH", token: tokens.Nam, body: { username: "x".repeat(60) } });
   log(renameLong.status === 400, "tên 60 ký tự → 400", `HTTP ${renameLong.status}`);
   await req("/user/me", { method: "PATCH", token: tokens.Nam, body: { username: "Nam" } });
-
 
   const wrongPwd = await req("/user/me/password", {
     method: "PUT",
@@ -202,7 +184,6 @@ async function main() {
     "đổi mật khẩu sai current → 400 + message tiếng Việt",
     `HTTP ${wrongPwd.status}, ${(wrongPwd.json?.message ?? "").slice(0, 40)}`,
   );
-
 
   const shortPwd = await req("/user/me/password", {
     method: "PUT",
@@ -218,7 +199,6 @@ async function main() {
   });
   log(okPwd.status === 204, "đổi mật khẩu đúng → 204", `HTTP ${okPwd.status}`);
 
-
   const stale = await req("/auth/me", { token: tokens.Mai });
   log(stale.status === 401, "token cũ sau đổi mật khẩu → 401", `HTTP ${stale.status}`);
 
@@ -233,13 +213,11 @@ async function main() {
   });
   log(oldPwdLogin.status === 401, "đăng nhập mật khẩu CŨ → 401", `HTTP ${oldPwdLogin.status}`);
 
-
   const delAcc = await req("/user/me", { method: "DELETE", token: relogin.json.accessToken });
   log(delAcc.status === 204, "DELETE /user/me → 204", `HTTP ${delAcc.status}`);
 
   const deadToken = await req("/auth/me", { token: relogin.json.accessToken });
   log(deadToken.status === 401, "token sau xóa tài khoản → 401", `HTTP ${deadToken.status}`);
-
 
   const ghost = await req(`/user/${ids.Mai}`, { token: tokens.Nam });
   log(ghost.status === 404, "profile người đã xóa → 404 (isDeletedFalse)", `HTTP ${ghost.status}`);

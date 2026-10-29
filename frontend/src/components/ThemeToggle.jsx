@@ -1,10 +1,6 @@
 import { useTheme } from "../store/theme.js";
 import { Moon, Sun } from "@phosphor-icons/react";
 
-
-
-
-
 export default function ThemeToggle() {
   const theme = useTheme((s) => s.theme);
   const toggle = useTheme((s) => s.toggle);

@@ -5,21 +5,13 @@ import ProfileCard from "../ProfileCard.jsx";
 import { useUi } from "../../store/ui.js";
 import { useAuth } from "../../store/auth.js";
 
-
 const TYPING_TICK_MS = 1200;
-
-
-
-
-
-
 
 export default function ChatHeader({ conv, panelOpen = false, onTogglePanel }) {
   const myId = useAuth((s) => s.user?.id);
   const presence = useUi((s) => s.presence);
   const [tick, setTick] = useState(0);
   const [profileOpen, setProfileOpen] = useState(false);
-
 
   useEffect(() => {
     const t = setInterval(() => setTick((v) => v + 1), TYPING_TICK_MS);
@@ -54,7 +46,7 @@ export default function ChatHeader({ conv, panelOpen = false, onTogglePanel }) {
       className="flex h-14 shrink-0 items-center gap-3 border-b px-4"
       style={{ borderColor: "var(--border)", background: "var(--bg-chat)" }}
     >
-      {                                                                              }
+
       {isDirect && other && String(other.id) !== String(myId) ? (
         <button
           type="button"

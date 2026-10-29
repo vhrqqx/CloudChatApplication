@@ -1,7 +1,3 @@
-
-
-
-
 export function formatChatListTime(iso) {
   if (!iso) return "";
   const d = new Date(iso);
@@ -16,7 +12,6 @@ export function formatChatListTime(iso) {
   if (d.getFullYear() !== now.getFullYear()) opts.year = "numeric";
   return d.toLocaleDateString("vi-VN", opts);
 }
-
 
 export function formatBubbleTime(iso) {
   if (!iso) return "";

@@ -21,15 +21,6 @@ import { useTheme } from "../store/theme.js";
 import Avatar from "./Avatar.jsx";
 import { useUi } from "../store/ui.js";
 
-
-
-
-
-
-
-
-
-
 export default function ProfileModal({ open, onClose }) {
   const user = useAuth((s) => s.user);
   const logout = useAuth((s) => s.logout);
@@ -127,7 +118,7 @@ export default function ProfileModal({ open, onClose }) {
     <>
       <Dialog onClose={onClose} labelledById="profile-title" width={440} elevated={false}>
         <div className="p-5">
-          {                                            }
+
           <div className="flex items-center gap-2">
             {page === "password" ? (
               <button
@@ -161,7 +152,7 @@ export default function ProfileModal({ open, onClose }) {
 
           {page === "main" && (
             <>
-              {                                         }
+
               <section
                 aria-label="Thẻ hồ sơ"
                 className="relative mt-4 p-4"
@@ -171,7 +162,7 @@ export default function ProfileModal({ open, onClose }) {
                   borderRadius: "var(--radius-md)",
                 }}
               >
-                {                                     }
+
                 <button
                   type="button"
                   aria-label={editingName ? "Hủy sửa tên" : "Sửa tên hiển thị"}
@@ -202,7 +193,6 @@ export default function ProfileModal({ open, onClose }) {
                   </div>
                 </div>
 
-                {                                 }
                 <div className="mt-4 grid grid-cols-2 gap-2">
                   <label style={{ fontSize: "11px", color: "var(--text-secondary)", display: "block" }}>
                     Tên hiển thị
@@ -318,9 +308,8 @@ export default function ProfileModal({ open, onClose }) {
                 )}
               </section>
 
-              {                                        }
               <section aria-label="Cài đặt" className="mt-4 flex flex-col gap-2">
-                {                                       }
+
                 <button
                   type="button"
                   style={rowStyle()}
@@ -351,7 +340,6 @@ export default function ProfileModal({ open, onClose }) {
                   </span>
                 </button>
 
-                {                            }
                 <button
                   type="button"
                   style={rowStyle()}
@@ -366,7 +354,6 @@ export default function ProfileModal({ open, onClose }) {
                   <CaretRight size={14} weight="regular" color="var(--text-secondary)" />
                 </button>
 
-                {                               }
                 <button
                   type="button"
                   style={rowStyle()}
@@ -418,7 +405,6 @@ export default function ProfileModal({ open, onClose }) {
     </>
   );
 }
-
 
 function PasswordPage({ onDone }) {
   const logout = useAuth((s) => s.logout);

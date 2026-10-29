@@ -9,14 +9,10 @@ export class ApiError extends Error {
   }
 }
 
-
 let onUnauthorized = null;
 export function setUnauthorizedHandler(fn) {
   onUnauthorized = fn;
 }
-
-
-
 
 export function getToken() {
   try {
@@ -36,10 +32,6 @@ export function setToken(token) {
 export function clearToken() {
   setToken(null);
 }
-
-
-
-
 
 export async function api(path, { method = "GET", body, signal } = {}) {
   const headers = {};
@@ -80,12 +72,6 @@ export async function api(path, { method = "GET", body, signal } = {}) {
   throw new ApiError(res.status, payload?.message, payload?.validationErrors);
 }
 
-
-
-
-
-
-
 export function uploadFile(conversationId, file, { onProgress } = {}) {
   return new Promise((resolve, reject) => {
     const token = getToken();
@@ -124,10 +110,6 @@ export function uploadFile(conversationId, file, { onProgress } = {}) {
     xhr.send(fd);
   });
 }
-
-
-
-
 
 export async function apiBinary(path) {
   const headers = {};

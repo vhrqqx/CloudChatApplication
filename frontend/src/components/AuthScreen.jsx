@@ -1,12 +1,6 @@
 import { useState } from "react";
 import { useAuth } from "../store/auth.js";
 
-
-
-
-
-
-
 export default function AuthScreen() {
   return (
     <div

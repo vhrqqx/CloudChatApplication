@@ -5,19 +5,8 @@ import { useUi } from "../../store/ui.js";
 import { useChat } from "../../store/chat.js";
 import { formatBytes, MAX_FILE_BYTES } from "./MessageList.jsx";
 
-
 const TYPING_INTERVAL_MS = 2000;
 const MAX_LINES = 4;
-
-
-
-
-
-
-
-
-
-
 
 export default function Composer({ conversationId }) {
   const [text, setText] = useState("");
@@ -31,7 +20,6 @@ export default function Composer({ conversationId }) {
 
   const file = pendingFile?.file ?? null;
   const uploading = progress !== null;
-
 
   function resize() {
     const el = textareaRef.current;
@@ -60,7 +48,6 @@ export default function Composer({ conversationId }) {
       submit();
     }
   }
-
 
   function onPickFile(e) {
     const picked = e.target.files?.[0];
@@ -139,7 +126,6 @@ export default function Composer({ conversationId }) {
         </p>
       )}
 
-      {                                                                                            }
       {file && (
         <div
           className="relative mb-2 flex items-center gap-2 border px-2 py-1.5"
@@ -192,7 +178,7 @@ export default function Composer({ conversationId }) {
           >
             <X size={16} weight="regular" />
           </button>
-          {                                                  }
+
           {uploading && (
             <span
               aria-hidden="true"

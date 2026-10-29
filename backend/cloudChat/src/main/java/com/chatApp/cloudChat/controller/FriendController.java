@@ -17,14 +17,6 @@ import com.chatApp.cloudChat.DTO.CreateFriendRequest;
 import com.chatApp.cloudChat.security.AppUserPrincipal;
 import com.chatApp.cloudChat.service.FriendService;
 
-
-
-
-
-
-
-
-
 @RestController
 @RequestMapping("/api/v1/friend-request")
 public class FriendController {

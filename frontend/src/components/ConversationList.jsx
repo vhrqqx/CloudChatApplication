@@ -6,11 +6,6 @@ import ConversationItem from "./ConversationItem.jsx";
 import CreateConversationModal from "./CreateConversationModal.jsx";
 import ConfirmDialog from "./ConfirmDialog.jsx";
 
-
-
-
-
-
 export default function ConversationList() {
   const items = useChat((s) => s.items);
   const status = useChat((s) => s.status);
@@ -62,7 +57,6 @@ export default function ConversationList() {
         </button>
       </header>
 
-      {                                                }
       <div
         className="px-3 pb-3 border-b"
         style={{ borderColor: "var(--border)" }}
@@ -144,7 +138,6 @@ export default function ConversationList() {
           </div>
         )}
 
-        {                                                    }
         {filtered.map((item) => (
           <ConversationItem
             key={item.id}
@@ -158,7 +151,6 @@ export default function ConversationList() {
 
       <CreateConversationModal open={creating} onClose={() => setCreating(false)} />
 
-      {                                                                                  }
       <ConfirmDialog
         open={Boolean(confirm)}
         title={confirm?.kind === "delete" ? "Xóa cuộc trò chuyện?" : "Rời khỏi cuộc trò chuyện?"}

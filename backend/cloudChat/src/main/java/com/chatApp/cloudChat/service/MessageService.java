@@ -20,9 +20,6 @@ import com.chatApp.cloudChat.exception.MessageNotFoundException;
 import com.chatApp.cloudChat.model.Message;
 import com.chatApp.cloudChat.repository.MessagesRepo;
 
-
-
-
 @Service
 public class MessageService {
     private final MessagesRepo messagesRepo;
@@ -76,7 +73,6 @@ public class MessageService {
         // Storage-aware delete: the attachment rows cascade away with the message, so the
         // stored objects must be removed too or they become permanent, unidentifiable orphans.
         purgeService.purgeMessageData(message);
-
 
         eventPublisher.publishEvent(new com.chatApp.cloudChat.event.MessageDeletedEvent(
                 message.getConversationId(), messageId, currentUserId));
