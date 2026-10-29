@@ -26,13 +26,15 @@ public class ConversationService {
     private final ConversationMemberRepo conversationMemberRepo;
     private final ConversationMemberService memberService;
     private final ConversationPurgeService purgeService;
+    private final FriendService friendService;
 
-    public ConversationService(ConversationRepo conversationRepo, UsersRepo usersRepo, ConversationMemberRepo conversationMemberRepo, ConversationMemberService memberService, ConversationPurgeService purgeService) {
+    public ConversationService(ConversationRepo conversationRepo, UsersRepo usersRepo, ConversationMemberRepo conversationMemberRepo, ConversationMemberService memberService, ConversationPurgeService purgeService, FriendService friendService) {
         this.conversationRepo = conversationRepo;
         this.usersRepo = usersRepo;
         this.conversationMemberRepo = conversationMemberRepo;
         this.memberService = memberService;
         this.purgeService = purgeService;
+        this.friendService = friendService;
     }
     @Transactional
     public ConversationResponse createConversation(CreateConversationRequest request, Long creatorId) {
@@ -45,6 +47,16 @@ public class ConversationService {
         }
         if (request.conversationType() == ConversationType.DIRECT && otherUserIds.size() != 1) {
             throw new IllegalArgumentException("Đây là hộp thoại tin nhắn riêng, chỉ có thể có bạn và người nhận!");
+        }
+
+
+        if (!otherUserIds.isEmpty()) {
+            List<Long> notFriends = friendService.filterNonFriends(creatorId, java.util.List.copyOf(otherUserIds));
+            if (!notFriends.isEmpty()) {
+                throw new AccessDeniedException(request.conversationType() == ConversationType.DIRECT
+                        ? "Chỉ bạn bè mới có thể nhắn tin riêng — hãy kết bạn đã."
+                        : "Chỉ có thể mời bạn bè vào nhóm — hãy kết bạn với họ qua nhóm hiện có.");
+            }
         }
         Conversation savedConversation = conversationRepo.save(new Conversation(request.conversationType()));
         List<ConversationMember> membersToSave = new ArrayList<>();

@@ -30,12 +30,14 @@ public class MessageService {
     private final ConversationMemberService conversationMemberService;
     private final UsersRepo usersRepo;
     private final ConversationPurgeService purgeService;
-    public MessageService(MessagesRepo messagesRepo, ConversationRepo conversationRepo, ConversationMemberService conversationMemberService, UsersRepo usersRepo, ConversationPurgeService purgeService) {
+    private final org.springframework.context.ApplicationEventPublisher eventPublisher;
+    public MessageService(MessagesRepo messagesRepo, ConversationRepo conversationRepo, ConversationMemberService conversationMemberService, UsersRepo usersRepo, ConversationPurgeService purgeService, org.springframework.context.ApplicationEventPublisher eventPublisher) {
         this.messagesRepo = messagesRepo;
         this.conversationRepo = conversationRepo;
         this.conversationMemberService = conversationMemberService;
         this.usersRepo = usersRepo;
         this.purgeService = purgeService;
+        this.eventPublisher = eventPublisher;
     }
     @Transactional(readOnly = true)
     public MessageResponse findByMessageId(Long id, Long conversationId, Long userId) {
@@ -74,6 +76,10 @@ public class MessageService {
         // Storage-aware delete: the attachment rows cascade away with the message, so the
         // stored objects must be removed too or they become permanent, unidentifiable orphans.
         purgeService.purgeMessageData(message);
+
+
+        eventPublisher.publishEvent(new com.chatApp.cloudChat.event.MessageDeletedEvent(
+                message.getConversationId(), messageId, currentUserId));
     }
     @Transactional(readOnly = true)
     public Page<MessageResponse> getMessageByConversation(Long conversationId, Long currentUserId, Pageable pageable) {

@@ -31,15 +31,17 @@ public class ConversationMemberService {
     private final UsersRepo usersRepo;
     private final ConversationPurgeService purgeService;
     private final ApplicationEventPublisher eventPublisher;
+    private final FriendService friendService;
 
     public ConversationMemberService(ConversationMemberRepo conversationMemberRepo, ConversationRepo conversationRepo,
                                      UsersRepo usersRepo, ConversationPurgeService purgeService,
-                                     ApplicationEventPublisher eventPublisher) {
+                                     ApplicationEventPublisher eventPublisher, FriendService friendService) {
         this.conversationMemberRepo = conversationMemberRepo;
         this.conversationRepo = conversationRepo;
         this.usersRepo = usersRepo;
         this.purgeService = purgeService;
         this.eventPublisher = eventPublisher;
+        this.friendService = friendService;
     }
 
     // Thêm / Xóa / Rời nhóm
@@ -62,6 +64,11 @@ public class ConversationMemberService {
 
         if (isMember(conversationId, request.userId())) {
             throw new IllegalArgumentException("Người dùng đã là thành viên của cuộc trò chuyện");
+        }
+
+
+        if (!friendService.areFriends(currentUserId, request.userId())) {
+            throw new AccessDeniedException("Chỉ có thể thêm bạn bè vào nhóm — hãy kết bạn qua nhóm này trước.");
         }
 
         ConversationMember member = new ConversationMember(conversation, targetUser, MemberRole.MEMBER);

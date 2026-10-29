@@ -1,0 +1,40 @@
+@import "tailwindcss";
+@import "./tokens.css";
+
+@layer base {
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+
+  body {
+    font-family: var(--font-sans);
+    background: var(--bg-chat);
+    color: var(--text-primary);
+    -webkit-font-smoothing: antialiased;
+  }
+
+
+  button,
+  [role="button"] {
+    cursor: pointer;
+  }
+
+
+  :focus-visible {
+    outline: none;
+    box-shadow: var(--focus-ring);
+  }
+
+
+  .tnum {
+    font-variant-numeric: tabular-nums;
+  }
+
+
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--scroll-thumb) transparent;
+  }
+}
