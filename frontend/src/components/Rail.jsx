@@ -1,11 +1,14 @@
+import FindFriendsModal from "./FindFriendsModal.jsx";
+import NotificationCenter from "./NotificationCenter.jsx";
 import { useState } from "react";
-import { Chats, Users } from "@phosphor-icons/react";
+import { Chats, Users, UserPlus } from "@phosphor-icons/react";
 import ThemeToggle from "./ThemeToggle.jsx";
 import RailAvatar from "./RailAvatar.jsx";
 import ContactsModal from "./ContactsModal.jsx";
 import { useFriends } from "../store/friends.js";
 
 export default function Rail() {
+  const [finding, setFinding] = useState(false);
   const [contactsOpen, setContactsOpen] = useState(false);
   const pending = useFriends((s) => s.incoming.length);
 
@@ -67,6 +70,8 @@ export default function Rail() {
             </span>
           )}
         </button>
+        <button className="m9-icon mt-2" title="Thêm bạn" aria-label="Thêm bạn" onClick={() => setFinding(true)}><UserPlus size={20} /></button>
+        <NotificationCenter />
       </div>
 
       <div className="flex flex-col items-center gap-2">
@@ -74,6 +79,7 @@ export default function Rail() {
         <RailAvatar />
       </div>
 
+      {finding && <FindFriendsModal onClose={() => setFinding(false)} />}
       <ContactsModal open={contactsOpen} onClose={() => setContactsOpen(false)} />
     </nav>
   );

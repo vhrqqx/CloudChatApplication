@@ -15,6 +15,7 @@ export default function CreateConversationModal({ open, onClose }) {
   const friendsStatus = useFriends((s) => s.status);
   const loadFriends = useFriends((s) => s.load);
 
+  const [title, setTitle] = useState("");
   const [mode, setMode] = useState("DIRECT");
   const [query, setQuery] = useState("");
   const [selected, setSelected] = useState(new Set());
@@ -25,6 +26,7 @@ export default function CreateConversationModal({ open, onClose }) {
     if (!open) return;
     setSelected(new Set());
     setQuery("");
+    setTitle("");
     setError(null);
     if (friendsStatus === "idle") loadFriends().catch(() => {});
   }, [open, friendsStatus, loadFriends]);
@@ -37,7 +39,7 @@ export default function CreateConversationModal({ open, onClose }) {
   const filtered = q ? users.filter((u) => (u.username || "").toLowerCase().includes(q)) : users;
 
   const selectedUsernames = users
-    .filter((u) => selected.has(u.id))
+    .filter((u) => selected.has(u.userId))
     .map((u) => u.username);
 
   function toggle(id) {
@@ -60,6 +62,7 @@ export default function CreateConversationModal({ open, onClose }) {
   }
 
   async function onStart() {
+    if (busy || (mode === "GROUP" ? selected.size < 2 : selected.size !== 1)) return;
     setBusy(true);
     setError(null);
     try {
@@ -76,6 +79,7 @@ export default function CreateConversationModal({ open, onClose }) {
       } else {
         await create({
           conversationType: "GROUP",
+          title: title.trim() || null,
           memberId: [...selected],
         });
       }
@@ -90,13 +94,13 @@ export default function CreateConversationModal({ open, onClose }) {
     !busy && selected.size > 0 && (mode === "DIRECT" || selected.size >= 2);
 
   return (
-    <Dialog onClose={busy ? () => {} : onClose} labelledById="create-conversation-title">
+    <Dialog onClose={busy ? () => {} : onClose} labelledById="create-conversation-title" elevated={false}>
       <div className="p-6">
         <div className="flex items-center justify-between">
           <h2
             id="create-conversation-title"
             className="m-0"
-            style={{ fontSize: "16px", fontWeight: 600, color: "var(--text-primary)" }}
+            style={{ fontSize: "14px", fontWeight: 600, color: "var(--text-primary)" }}
           >
             Tạo cuộc trò chuyện mới
           </h2>
@@ -142,6 +146,7 @@ export default function CreateConversationModal({ open, onClose }) {
           ))}
         </div>
 
+        {mode === "GROUP" && <p className="mt-3 mb-0" style={{ fontSize: 12, color: "var(--text-secondary)" }}>Bạn là quản trị viên đầu tiên. Chọn ít nhất 2 bạn bè để tạo nhóm từ 3 người.</p>}
         {mode === "GROUP" && selectedUsernames.length > 0 && (
           <p className="mt-3 mb-0" style={{ fontSize: "12px", color: "var(--text-secondary)" }}>
             Nhóm của: <span style={{ color: "var(--text-primary)", fontWeight: 600 }}>
@@ -150,6 +155,7 @@ export default function CreateConversationModal({ open, onClose }) {
           </p>
         )}
 
+        {mode === 'GROUP' && <input className="m9-filter mt-3" aria-label="Tên nhóm (không bắt buộc)" placeholder="Tên nhóm (không bắt buộc, tối đa 20 ký tự)" maxLength={20} value={title} onChange={(e) => setTitle(e.target.value)} />}
         <div className="relative mt-3">
           <MagnifyingGlass
             size={14}
@@ -199,19 +205,19 @@ export default function CreateConversationModal({ open, onClose }) {
             <p className="m-0" style={{ fontSize: "13px", color: "var(--text-secondary)" }}>
               {q
                 ? "Không tìm thấy bạn bè phù hợp"
-                : "Chưa có bạn bè — hãy kết bạn qua các nhóm chung trước"}
+                : "Chưa có bạn bè — bấm Thêm bạn để kết bạn trước"}
             </p>
           )}
 
           {filtered.map((u) => {
-            const isSelected = selected.has(u.id);
+            const isSelected = selected.has(u.userId);
             return (
               <button
-                key={u.id}
+                key={u.userId}
                 role="option"
                 aria-selected={isSelected}
                 type="button"
-                onClick={() => toggle(u.id)}
+                onClick={() => toggle(u.userId)}
                 className="flex items-center gap-3 px-2 py-2 text-left"
                 style={{
                   background: isSelected ? "var(--bg-item-active)" : "transparent",
@@ -247,6 +253,7 @@ export default function CreateConversationModal({ open, onClose }) {
             fontSize: "14px",
             fontWeight: 600,
             opacity: canSubmit ? 1 : 0.5,
+            cursor: canSubmit ? "pointer" : "not-allowed",
           }}
         >
           {busy

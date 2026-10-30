@@ -52,7 +52,7 @@ function subscribeConversation(id) {
   const key = String(id);
   if (!state.convIds.has(key)) state.convIds.add(key);
   if (!state.client?.connected) return;
-  state.convSubs.get(key)?.unsubscribe();
+  if (state.convSubs.has(key)) return;
   state.convSubs.set(
     key,
     state.client.subscribe(`${TOPIC_PREFIX}${key}`, (m) =>
@@ -89,9 +89,13 @@ export function start(token) {
     brokerURL: `${location.protocol === "https:" ? "wss" : "ws"}://${location.host}/ws`,
     connectHeaders: { Authorization: `Bearer ${token}` },
     heartbeatIncoming: 10000,
-    heartbeatOutgoing: 10000,
+    heartbeatOutgoing: 0,
     reconnectDelay: 3000,
     onConnect: () => {
+      state.convSubs.clear();
+      state.presenceSub = null;
+      state.contactsSub = null;
+      state.errorsSub = null;
       state.client = client;
 
       for (const id of state.convIds) subscribeConversation(id);

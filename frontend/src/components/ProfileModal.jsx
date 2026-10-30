@@ -11,6 +11,7 @@ import {
   Key,
   X,
 } from "@phosphor-icons/react";
+import PrivacySettings from "./PrivacySettings.jsx";
 import Dialog from "./Dialog.jsx";
 import ConfirmDialog from "./ConfirmDialog.jsx";
 import { api } from "../lib/api.js";
@@ -308,6 +309,7 @@ export default function ProfileModal({ open, onClose }) {
                 )}
               </section>
 
+              <PrivacySettings />
               <section aria-label="Cài đặt" className="mt-4 flex flex-col gap-2">
 
                 <button

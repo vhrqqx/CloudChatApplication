@@ -1,514 +1,87 @@
-import { useEffect, useRef, useState } from "react";
-import { DotsThreeVertical, Plus } from "@phosphor-icons/react";
-import Avatar, { initialsOf } from "../Avatar.jsx";
-import ConfirmDialog from "../ConfirmDialog.jsx";
-import Dialog from "../Dialog.jsx";
-import ProfileCard from "../ProfileCard.jsx";
-import { useChat } from "../../store/chat.js";
-import { useAuth } from "../../store/auth.js";
-import { useFriends } from "../../store/friends.js";
-import { useUi } from "../../store/ui.js";
+import { useEffect, useRef, useState } from 'react';
+import { UserCircle, Bell, BellSlash, MagnifyingGlass, CaretDown, Image, FileText } from '@phosphor-icons/react';
+import { CommunityTools, MetadataButton } from "../nebula/CommunityTools.jsx";
+import { useNebula, roomName, hierarchy } from "../../store/nebula.js";
+import GroupMembers from './GroupMembers.jsx';
+import Avatar from '../Avatar.jsx';
+import ProfileCard from '../ProfileCard.jsx';
+import ConfirmDialog from '../ConfirmDialog.jsx';
+import ThemeToggle from '../ThemeToggle.jsx';
+import { useAuth } from '../../store/auth.js';
+import { useUi } from '../../store/ui.js';
+import { useChat } from '../../store/chat.js';
+import { useAccountPolicies } from '../../store/accountPolicies.js';
+import { useFriends } from '../../store/friends.js';
+import { api } from '../../lib/api.js';
+import { isConversationMuted, setConversationMuted } from '../../lib/conversationPreferences.js';
+import { replyExcerpt } from '../../lib/reply.js';
+import { stickerOf } from '../../data/stickers.js';
 
-export default function MemberPanel({ conv }) {
-  const myId = useAuth((s) => s.user?.id);
-  const members = useChat((s) => s.members[String(conv.id)]);
-  const refreshMembers = useChat((s) => s.refreshMembers);
-  const addMember = useChat((s) => s.addMember);
-  const changeRole = useChat((s) => s.changeRole);
-  const removeMember = useChat((s) => s.removeMember);
-  const remove = useChat((s) => s.remove);
-  const leave = useChat((s) => s.leave);
-  const presence = useUi((s) => s.presence);
-  const flashError = useUi((s) => s.flashError);
-
-  const [adding, setAdding] = useState(false);
-  const [menuFor, setMenuFor] = useState(null);
-  const [confirm, setConfirm] = useState(null);
-  const [profileFor, setProfileFor] = useState(null);
-  const menuWrapRef = useRef(null);
-
-  useEffect(() => {
-    if (conv.type !== "GROUP") return;
-    refreshMembers(conv.id).catch(() => {});
-  }, [conv.id, conv.type]);
-
-  useEffect(() => {
-    if (!menuFor) return;
-    const onDown = (e) => {
-      if (!menuWrapRef.current?.contains(e.target)) setMenuFor(null);
-    };
-    const onKey = (e) => {
-      if (e.key === "Escape") setMenuFor(null);
-    };
-    document.addEventListener("mousedown", onDown);
-    document.addEventListener("keydown", onKey);
-    return () => {
-      document.removeEventListener("mousedown", onDown);
-      document.removeEventListener("keydown", onKey);
-    };
-  }, [menuFor]);
-
-  const isGroup = conv.type === "GROUP";
-  const isAdmin = conv.role === "ADMIN";
-
-  async function runAction(fn) {
-    try {
-      await fn();
-    } catch (e) {
-      flashError(e.message || "Thao tác thất bại — thử lại.");
-    }
-  }
-
-  return (
-    <aside
-      aria-label="Thông tin hội thoại"
-      className="flex h-full w-[280px] shrink-0 flex-col border-l"
-      style={{ background: "var(--bg-list)", borderColor: "var(--border)" }}
-    >
-      <div
-        className="flex h-14 shrink-0 items-center border-b px-4"
-        style={{ borderColor: "var(--border)" }}
-      >
-        <p
-          className="m-0"
-          style={{ fontSize: "14px", fontWeight: 600, color: "var(--text-primary)" }}
-        >
-          {isGroup ? "Thành viên" : "Thông tin"}
-        </p>
-      </div>
-
-      <div className="flex-1 overflow-y-auto p-3">
-
-        {!isGroup && conv.others?.[0] && String(conv.others[0].id) !== String(myId) && (
-          <div className="flex flex-col items-center gap-2 pt-6">
-            <button
-              type="button"
-              aria-label={`Xem hồ sơ ${conv.displayName || ""}`}
-              className="block rounded-full"
-              onClick={() =>
-                setProfileFor({
-                  userId: conv.others[0].id,
-                  username: conv.others[0].username ?? conv.displayName,
-                  sourceConversationId: null,
-                })
-              }
-            >
-              <Avatar name={conv.displayName ?? ""} size={48} ringToken="--bg-list" />
-            </button>
-            <p className="m-0" style={{ fontSize: "14px", fontWeight: 600, color: "var(--text-primary)" }}>
-              {conv.displayName || `Cuộc trò chuyện #${conv.id}`}
-            </p>
-            <p className="m-0" style={{ fontSize: "12px", color: "var(--text-secondary)" }}>
-              Cuộc trò chuyện riêng tư 1–1
-            </p>
-          </div>
-        )}
-        {!isGroup && !conv.others?.[0] && (
-          <div className="flex flex-col items-center gap-2 pt-6">
-            <Avatar name={conv.displayName ?? ""} size={48} ringToken="--bg-list" />
-            <p className="m-0" style={{ fontSize: "14px", fontWeight: 600, color: "var(--text-primary)" }}>
-              {conv.displayName || `Cuộc trò chuyện #${conv.id}`}
-            </p>
-            <p className="m-0" style={{ fontSize: "12px", color: "var(--text-secondary)" }}>
-              Cuộc trò chuyện riêng tư 1–1
-            </p>
-          </div>
-        )}
-
-        {isGroup && (
-          <ul className="m-0 flex list-none flex-col gap-1 p-0">
-            {(members ?? []).map((m) => (
-              <li
-                key={m.id}
-                className="group relative flex items-center gap-3 px-2 py-2"
-                style={{ borderRadius: "var(--radius-sm)" }}
-              >
-
-                {String(m.id) !== String(myId) ? (
-                  <button
-                    type="button"
-                    aria-label={`Xem hồ sơ ${m.username}`}
-                    className="relative block shrink-0 rounded-full"
-                    onClick={() =>
-                      setProfileFor({
-                        userId: m.id,
-                        username: m.username,
-                        sourceConversationId: conv.id,
-                      })
-                    }
-                  >
-                    <span className="relative inline-block" style={{ width: 32, height: 32 }}>
-                      <span
-                        className="flex h-full w-full items-center justify-center rounded-full"
-                        style={{ background: "#27272A", color: "#FFFFFF" }}
-                      >
-                        <span style={{ fontSize: 11, fontWeight: 600, lineHeight: 1 }}>
-                          {initialsOf(m.username)}
-                        </span>
-                      </span>
-                      {presence[String(m.id)] === true && (
-                        <span
-                          aria-label="Đang hoạt động"
-                          className="absolute rounded-full"
-                          style={{
-                            width: 8,
-                            height: 8,
-                            bottom: 0,
-                            right: 0,
-                            background: "var(--presence)",
-                            boxShadow: "0 0 0 2px var(--bg-list)",
-                          }}
-                        />
-                      )}
-                    </span>
-                  </button>
-                ) : (
-                  <span className="relative inline-block shrink-0" style={{ width: 32, height: 32 }}>
-                    <span
-                      className="flex h-full w-full items-center justify-center rounded-full"
-                      style={{ background: "#27272A", color: "#FFFFFF" }}
-                    >
-                      <span style={{ fontSize: 11, fontWeight: 600, lineHeight: 1 }}>
-                        {initialsOf(m.username)}
-                      </span>
-                    </span>
-                    {presence[String(m.id)] === true && (
-                      <span
-                        aria-label="Đang hoạt động"
-                        className="absolute rounded-full"
-                        style={{
-                          width: 8,
-                          height: 8,
-                          bottom: 0,
-                          right: 0,
-                          background: "var(--presence)",
-                          boxShadow: "0 0 0 2px var(--bg-list)",
-                        }}
-                      />
-                    )}
-                  </span>
-                )}
-
-                <span className="min-w-0 flex-1">
-                  <span className="flex items-center gap-2">
-                    <span
-                      className="truncate"
-                      style={{ fontSize: "14px", fontWeight: 500, color: "var(--text-primary)" }}
-                    >
-                      {m.username}
-                      {String(m.id) === String(myId) ? " (bạn)" : ""}
-                    </span>
-                    {m.role === "ADMIN" && (
-                      <span
-                        className="shrink-0"
-                        style={{
-                          fontSize: "11px",
-                          padding: "1px 6px",
-                          borderRadius: 999,
-                          background: "var(--bg-rail)",
-                          border: "1px solid var(--border)",
-                          color: "var(--text-secondary)",
-                          whiteSpace: "nowrap",
-                        }}
-                      >
-                        Quản trị viên
-                      </span>
-                    )}
-                  </span>
-                </span>
-
-                {isAdmin && String(m.id) !== String(myId) && (
-                  <div ref={m.id === menuFor ? menuWrapRef : undefined} className="relative">
-                    <button
-                      type="button"
-                      aria-label={`Tùy chọn cho ${m.username}`}
-                      aria-haspopup="menu"
-                      aria-expanded={menuFor === m.id}
-                      className="flex h-8 w-8 items-center justify-center"
-                      style={{ border: "none", background: "none", color: "var(--text-secondary)" }}
-                      onClick={() => setMenuFor((v) => (v === m.id ? null : m.id))}
-                    >
-                      <DotsThreeVertical size={20} weight="regular" />
-                    </button>
-                    {menuFor === m.id && (
-                      <div
-                        role="menu"
-                        className="absolute right-0 top-9 z-20 py-1"
-                        style={{
-                          minWidth: 190,
-                          background: "var(--bubble-them-bg)",
-                          border: "1px solid var(--border)",
-                          borderRadius: "var(--radius-md)",
-                          boxShadow: "0 8px 24px rgba(0, 0, 0, 0.16)",
-                        }}
-                      >
-                        <button
-                          role="menuitem"
-                          type="button"
-                          onClick={() => {
-                            setMenuFor(null);
-                            setConfirm({ kind: "changeRole", member: m });
-                          }}
-                          className="block w-full px-4 py-2 text-left whitespace-nowrap"
-                          style={{ fontSize: "13px", color: "var(--text-primary)", border: "none", background: "none" }}
-                        >
-                          {m.role === "ADMIN" ? "Gỡ quyền quản trị" : "Chuyển quyền quản trị"}
-                        </button>
-                        <button
-                          role="menuitem"
-                          type="button"
-                          onClick={() => {
-                            setMenuFor(null);
-                            setConfirm({ kind: "removeMember", member: m });
-                          }}
-                          className="block w-full px-4 py-2 text-left whitespace-nowrap"
-                          style={{ fontSize: "13px", color: "var(--destructive)", border: "none", background: "none" }}
-                        >
-                          Xóa khỏi nhóm
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </li>
-            ))}
-          </ul>
-        )}
-
-        {isGroup && (
-          <button
-            type="button"
-            onClick={() => setAdding(true)}
-            className="mt-2 flex w-full items-center gap-2 px-2 py-2 text-left"
-            style={{ border: "none", background: "none", color: "var(--text-secondary)" }}
-          >
-            <Plus size={20} weight="regular" />
-            <span style={{ fontSize: "13px" }}>Thêm thành viên</span>
-          </button>
-        )}
-      </div>
-
-      {isGroup && (
-        <div className="shrink-0 border-t p-3" style={{ borderColor: "var(--border)" }}>
-          <button
-            type="button"
-            onClick={() => setConfirm({ kind: isAdmin ? "deleteConv" : "leaveConv" })}
-            className="h-[38px] w-full"
-            style={{
-              border: `1px solid var(--destructive)`,
-              borderRadius: "var(--radius-sm)",
-              background: "transparent",
-              color: "var(--destructive)",
-              fontSize: "13px",
-              fontWeight: 500,
-            }}
-          >
-            {isAdmin ? "Xóa cuộc trò chuyện" : "Rời khỏi cuộc trò chuyện"}
-          </button>
-        </div>
-      )}
-
-      <AddMemberDialog open={adding} conv={conv} onClose={() => setAdding(false)} onAdd={addMember} />
-
-      <ProfileCard
-        open={Boolean(profileFor)}
-        onClose={() => setProfileFor(null)}
-        userId={profileFor?.userId}
-        username={profileFor?.username}
-        sourceConversationId={profileFor?.sourceConversationId ?? null}
-      />
-
-      <ConfirmDialog
-        open={Boolean(confirm)}
-        title={
-          confirm?.kind === "changeRole"
-            ? confirm.member.role === "ADMIN"
-              ? "Gỡ quyền quản trị?"
-              : "Chuyển quyền quản trị?"
-            : confirm?.kind === "removeMember"
-              ? "Xóa khỏi nhóm?"
-              : confirm?.kind === "deleteConv"
-                ? "Xóa cuộc trò chuyện?"
-                : "Rời khỏi cuộc trò chuyện?"
-        }
-        description={
-          confirm?.kind === "changeRole"
-            ? confirm.member.role === "ADMIN"
-              ? `${confirm.member.username} sẽ trở thành thành viên thường (nhóm cần ít nhất 1 quản trị viên).`
-              : `${confirm.member.username} sẽ có thể quản trị nhóm: thêm người, đổi vai trò, xóa thành viên.`
-            : confirm?.kind === "removeMember"
-              ? `${confirm.member.username} sẽ bị xóa khỏi nhóm — có thể được thêm lại sau.`
-              : confirm?.kind === "deleteConv"
-                ? "Hội thoại cùng toàn bộ tin nhắn sẽ bị xóa vĩnh viễn — không thể hoàn tác."
-                : "Bạn sẽ không còn nhìn thấy hội thoại này cho đến khi được thêm lại."
-        }
-        confirmLabel={
-          confirm?.kind === "changeRole"
-            ? confirm.member.role === "ADMIN" ? "Gỡ quyền" : "Chuyển quyền"
-            : confirm?.kind === "removeMember"
-              ? "Xóa khỏi nhóm"
-              : confirm?.kind === "deleteConv"
-                ? "Xóa"
-                : "Rời khỏi"
-        }
-        action={async () => {
-          if (confirm.kind === "changeRole") {
-            await runAction(() => changeRole(conv.id, confirm.member.id, confirm.member.role === "ADMIN" ? "MEMBER" : "ADMIN"));
-          } else if (confirm.kind === "removeMember") {
-            await runAction(() => removeMember(conv.id, confirm.member.id));
-          } else if (confirm.kind === "deleteConv") {
-            await remove(conv.id);
-          } else {
-            await leave(conv.id);
-          }
-        }}
-        onClose={() => setConfirm(null)}
-      />
-    </aside>
-  );
+export default function MemberPanel({ conv, onMedia }) {
+  return <DirectMemberPanel key={conv.id} conv={conv} onMedia={onMedia} />;
 }
-
-function AddMemberDialog({ open, conv, onClose, onAdd }) {
-  const myId = useAuth((s) => s.user?.id);
-  const members = useChat((s) => s.members[String(conv.id)]);
-  const friends = useFriends((s) => s.friends);
-  const friendsStatus = useFriends((s) => s.status);
-  const loadFriends = useFriends((s) => s.load);
-  const [query, setQuery] = useState("");
-  const [selected, setSelected] = useState(new Set());
-  const [busy, setBusy] = useState(false);
+function Section({ title, children }) {
+  return <details className="direct-info-section"><summary>{title}<CaretDown size={14} /></summary><div className="direct-info-section-body">{children}</div></details>;
+}
+const fold = (value) => String(value ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/gi,'d').toLowerCase();
+function DirectMemberPanel({ conv, onMedia }) {
+  useNebula(s=>s.records);
+  const [profile, setProfile] = useState(false);
+  const [confirm, setConfirm] = useState(false);
+  const [details, setDetails] = useState(null);
+  const [search, setSearch] = useState(false);
+  const [query, setQuery] = useState('');
+  const [history, setHistory] = useState([]);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-
+  const input = useRef(null);
+  const isGroup = conv.type === "GROUP";
+  const other = isGroup ? null : conv.others?.[0];
+  const [privacyAction, setPrivacyAction] = useState(null);
+  const userId = useAuth((s) => s.user?.id);
+  const online = useUi((s) => s.presence[String(other?.id)]);
+  const friends = useFriends((s) => s.friends);
+  const isFriend = friends.some((f) => String(f.userId) === String(other?.id));
+  const [muted, setMuted] = useState(() => isConversationMuted(userId, conv.id));
   useEffect(() => {
-    if (!open) return;
-    setSelected(new Set());
-    setQuery("");
-    setError(null);
-    if (friendsStatus === "idle") loadFriends().catch(() => {});
-  }, [open, friendsStatus, loadFriends]);
-
-  if (!open) return null;
-
-  const memberIds = new Set((members ?? []).map((m) => String(m.id)));
-  const users = friends.filter(
-    (f) => String(f.userId) !== String(myId) && !memberIds.has(String(f.userId)),
-  );
-
-  const q = query.trim().toLowerCase();
-  const filtered = q ? users.filter((u) => (u.username || "").toLowerCase().includes(q)) : users;
-
-  async function onAddSelected() {
-    setBusy(true);
-    setError(null);
-    try {
-      for (const uid of selected) {
-        await onAdd(conv.id, uid);
+    let alive = true;
+    if (other?.id) api(`/user/${other.id}`).then((u) => { if (alive) setDetails(u); }).catch(() => {});
+    return () => { alive = false; };
+  }, [other?.id]);
+  useEffect(() => {
+    if (!search) return;
+    input.current?.focus();
+    const controller = new AbortController();
+    setLoading(true); setError(null);
+    (async () => {
+      const messages = [];
+      for (let page = 0; ; page++) {
+        const result = await api(`/message?conversationId=${conv.id}&page=${page}&size=100`, { signal: controller.signal });
+        if (controller.signal.aborted) return;
+        const rows = result?.content ?? []; messages.push(...rows);
+        if (rows.length < 100 || result?.last || result?.page?.totalPages <= page + 1) break;
       }
-      onClose();
-    } catch (e) {
-      setError(e.message || "Không thêm được thành viên.");
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  return (
-    <Dialog onClose={busy ? () => {} : onClose} labelledById="add-member-title" width={320}>
-      <div className="p-6">
-        <h2
-          id="add-member-title"
-          className="m-0"
-          style={{ fontSize: "16px", fontWeight: 600, color: "var(--text-primary)" }}
-        >
-          Thêm thành viên
-        </h2>
-
-        <input
-          aria-label="Tìm người dùng"
-          placeholder="Tìm người dùng"
-          autoComplete="off"
-          autoFocus
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          className="mt-3 h-8 w-full"
-          style={{
-            border: "1px solid var(--border)",
-            borderRadius: "var(--radius-sm)",
-            background: "transparent",
-            color: "var(--text-primary)",
-            fontSize: "13px",
-            padding: "0 10px",
-          }}
-        />
-
-        <div className="mt-2 flex max-h-48 flex-col gap-0.5 overflow-y-auto" role="listbox" aria-label="Danh sách bạn bè">
-          {friendsStatus === "loading" &&
-            Array.from({ length: 3 }).map((_, i) => (
-              <div key={i} className="h-10 animate-pulse" style={{ background: "var(--bg-item-hover)", borderRadius: "var(--radius-sm)" }} />
-            ))}
-          {friendsStatus === "ready" && users.length === 0 && (
-            <p className="m-0" style={{ fontSize: "13px", color: "var(--text-secondary)" }}>
-              Chưa có bạn bè phù hợp — bạn chỉ có thể thêm bạn bè vào nhóm
-            </p>
-          )}
-          {friendsStatus === "ready" && users.length > 0 && filtered.length === 0 && (
-            <p className="m-0" style={{ fontSize: "13px", color: "var(--text-secondary)" }}>
-              Không còn bạn bè nào để thêm
-            </p>
-          )}
-          {filtered.map((u) => {
-            const sel = selected.has(u.id);
-            return (
-              <button
-                key={u.id}
-                role="option"
-                aria-selected={sel}
-                type="button"
-                onClick={() =>
-                  setSelected((prev) => {
-                    const next = new Set(prev);
-                    next.has(u.id) ? next.delete(u.id) : next.add(u.id);
-                    return next;
-                  })
-                }
-                className="flex items-center gap-3 px-2 py-2 text-left"
-                style={{
-                  border: "none",
-                  background: sel ? "var(--bg-item-active)" : "transparent",
-                  borderRadius: "var(--radius-sm)",
-                }}
-              >
-                <Avatar name={u.username} size={28} ringToken="--bubble-them-bg" />
-                <span style={{ fontSize: "13px", color: "var(--text-primary)" }}>{u.username}</span>
-              </button>
-            );
-          })}
-        </div>
-
-        {error && (
-          <p role="alert" className="mt-3 mb-0" style={{ fontSize: "13px", color: "var(--destructive)" }}>
-            {error}
-          </p>
-        )}
-
-        <button
-          type="button"
-          onClick={onAddSelected}
-          disabled={selected.size === 0 || busy}
-          className="mt-5 flex h-[38px] w-full items-center justify-center"
-          style={{
-            border: "none",
-            borderRadius: "var(--radius-sm)",
-            background: "var(--accent)",
-            color: "var(--on-accent)",
-            fontSize: "14px",
-            fontWeight: 600,
-            opacity: selected.size === 0 || busy ? 0.5 : 1,
-          }}
-        >
-          {busy ? "Đang thêm…" : `Thêm (${selected.size})`}
-        </button>
-      </div>
-    </Dialog>
-  );
+      setHistory(messages);
+    })().catch((e) => { if (!controller.signal.aborted) setError(e.message); }).finally(() => { if (!controller.signal.aborted) setLoading(false); });
+    return () => controller.abort();
+  }, [search, conv.id]);
+  const results = query.trim() ? history.filter((m) => fold(m.content).includes(fold(query.trim()))) : [];
+  return <aside className="direct-info" aria-label="Thông tin hội thoại riêng">
+    <div className="direct-info-profile"><button disabled={!other} aria-label={`Xem hồ sơ ${conv.displayName}`} onClick={() => setProfile(true)}><Avatar name={conv.displayName ?? ''} isGroup={isGroup} size={64} /></button><div className="flex items-center gap-1"><strong>{roomName(conv)}</strong><MetadataButton conv={conv} type={isGroup?"rename":"nickname"}/></div>{details?.email && <span>{details.email}</span>}{online === true && <span>Đang hoạt động</span>}</div>
+    <div className="direct-info-actions" style={isGroup ? { gridTemplateColumns: "repeat(2,minmax(0,1fr))" } : undefined}>
+      {!isGroup && <button disabled={!other} onClick={() => setProfile(true)}><span><UserCircle size={20} /></span>Hồ sơ</button>}
+      <button aria-pressed={muted} title={muted ? 'Bật thông báo' : 'Tắt thông báo'} onClick={() => { const next = !muted; setMuted(next); setConversationMuted(userId, conv.id, next); }}><span>{muted ? <BellSlash size={20} /> : <Bell size={20} />}</span>{muted ? 'Bật thông báo' : 'Tắt thông báo'}</button>
+      <button aria-expanded={search} onClick={() => setSearch((v) => !v)}><span><MagnifyingGlass size={20} /></span>Tìm kiếm</button>
+    </div>
+    {search && <div className="direct-search"><input ref={input} className="m9-filter" aria-label="Tìm tin nhắn trong hội thoại" placeholder="Tìm trong cuộc trò chuyện…" value={query} onChange={(e) => setQuery(e.target.value)} />{loading && <p role="status">Đang tải lịch sử…</p>}{error && <p role="alert">{error}</p>}<div className="direct-search-results">{!loading && query.trim() && !results.length && <p>Không tìm thấy tin nhắn.</p>}{results.map((m) => <button key={m.id} onClick={() => window.dispatchEvent(new CustomEvent('cloudchat:jump-message', { detail: { conversationId: conv.id, messageId: m.id } }))}><span className="block truncate">{stickerOf(m.content)?.name ?? replyExcerpt(m.content)}</span><small>{new Date(m.createdAt).toLocaleString('vi-VN')}</small></button>)}</div></div>}
+    <Section title="Thông tin đoạn chat">{!isGroup && <button onClick={() => setProfile(true)}>Xem hồ sơ {other?.username ?? conv.displayName}</button>}{isGroup && <p>{conv.membersCount} thành viên</p>}<p>Bắt đầu: {new Date(conv.createdAt).toLocaleDateString('vi-VN')}</p></Section>
+    <Section title="Tùy chỉnh đoạn chat"><div className="flex items-center justify-between"><span>Giao diện sáng / tối</span><ThemeToggle /></div></Section>
+    {isGroup && <CommunityTools conv={conv}/>}
+    {isGroup && <Section title="Thành viên nhóm"><GroupMembers key={conv.id} conv={conv} /></Section>}
+    <Section title="Ảnh và tệp"><button onClick={() => onMedia?.('images')}><Image size={16} />Ảnh đã chia sẻ</button><button onClick={() => onMedia?.('files')}><FileText size={16} />Tệp và liên kết</button></Section>
+    <Section title="Quyền riêng tư và hỗ trợ"><button onClick={() => { const next = !muted; setMuted(next); setConversationMuted(userId, conv.id, next); }}>{muted ? 'Bật thông báo hội thoại' : 'Tắt thông báo hội thoại'}</button>{!isGroup && other && <><button onClick={() => setPrivacyAction("blocked")}>Chặn tài khoản</button><button onClick={() => setPrivacyAction("hidden")}>Ẩn tài khoản</button></>}{!isGroup && isFriend && <button style={{ color:'var(--destructive)' }} onClick={() => setConfirm(true)}>Hủy kết bạn</button>}<p>{isGroup ? "Quản lý vai trò và rời nhóm trong mục Thành viên nhóm." : "Tài khoản bị ẩn vẫn gửi được tin; hội thoại và thông báo được ẩn cho đến khi bạn bỏ ẩn trong Cài đặt."}</p></Section>
+    <ProfileCard open={profile} onClose={() => setProfile(false)} userId={other?.id} username={other?.username} contextConversationId={conv.id} sourceConversationId={null} />
+    <ConfirmDialog open={!!privacyAction} title={privacyAction === 'blocked' ? 'Chặn tài khoản?' : 'Ẩn tài khoản?'} description={privacyAction === 'blocked' ? 'Chặn nhắn tin riêng giữa hai tài khoản. Chỉ gỡ chặn trong Hồ sơ & Cài đặt.' : 'Ẩn hội thoại và tắt mọi thông báo của người này. Họ vẫn gửi được tin. Chỉ bỏ ẩn trong Hồ sơ & Cài đặt.'} confirmLabel="Xác nhận" onClose={() => setPrivacyAction(null)} action={async () => { await useAccountPolicies.getState().update(other.id, { [privacyAction]: true }); const chat = useChat.getState(); if (String(chat.selectedId) === String(conv.id)) chat.select(null); if (String(chat.secondaryId) === String(conv.id)) chat.closeSplit(); }} />
+    <ConfirmDialog open={confirm} title="Hủy kết bạn?" description={`Bạn muốn hủy kết bạn với ${conv.displayName}?`} confirmLabel="Hủy kết bạn" onClose={() => setConfirm(false)} action={() => useFriends.getState().unfriend(other.id)} />
+  </aside>;
 }

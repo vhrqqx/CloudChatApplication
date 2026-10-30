@@ -1,13 +1,20 @@
 import { useEffect, useRef, useState } from "react";
-import { ArrowClockwise, MagnifyingGlass, Plus } from "@phosphor-icons/react";
+import { ArrowClockwise, MagnifyingGlass, Plus, UserPlus } from "@phosphor-icons/react";
+import { useNebula, roomName } from "../store/nebula.js";
+import { useAccountPolicies } from "../store/accountPolicies.js";
 import { useAuth } from "../store/auth.js";
 import { useChat } from "../store/chat.js";
 import ConversationItem from "./ConversationItem.jsx";
 import CreateConversationModal from "./CreateConversationModal.jsx";
+import FindFriendsModal from "./FindFriendsModal.jsx";
 import ConfirmDialog from "./ConfirmDialog.jsx";
 
 export default function ConversationList() {
-  const items = useChat((s) => s.items);
+  const pins = useNebula(s=>s.pins);
+  useNebula(s=>s.records);
+  const allItems = useChat((s) => s.items);
+  const policies = useAccountPolicies((s) => s.items);
+  const items = allItems.filter((c) => c.type !== "DIRECT" || !policies.some((p) => (p.hidden || p.blocked) && c.others?.some((o) => String(o.id) === String(p.targetId))));
   const status = useChat((s) => s.status);
   const error = useChat((s) => s.error);
   const load = useChat((s) => s.load);
@@ -17,6 +24,7 @@ export default function ConversationList() {
   const leave = useChat((s) => s.leave);
 
   const [query, setQuery] = useState("");
+  const [finding, setFinding] = useState(false);
   const [creating, setCreating] = useState(false);
   const [confirm, setConfirm] = useState(null);
 
@@ -26,7 +34,7 @@ export default function ConversationList() {
   }, [load]);
 
   const q = query.trim().toLowerCase();
-  const filtered = q ? items.filter((it) => (it.displayName || "").toLowerCase().includes(q)) : items;
+  const filtered = (q ? items.filter((it) => (roomName(it) || "").toLowerCase().includes(q)) : [...items]).sort((a,b)=>Number(!!pins[b.id])-Number(!!pins[a.id]));
 
   function onAction(kind) {
     setConfirm({ kind });
@@ -35,7 +43,7 @@ export default function ConversationList() {
   return (
     <section
       aria-label="Danh sách cuộc trò chuyện"
-      className="flex h-full w-72 flex-col border-r"
+      className="flex h-full w-72 shrink-0 flex-col border-r"
       style={{ background: "var(--bg-list)", borderColor: "var(--border)" }}
     >
       <header className="flex items-center justify-between pl-4 pr-2 pt-3 pb-2">
@@ -45,7 +53,7 @@ export default function ConversationList() {
         >
           Cuộc trò chuyện
         </h1>
-        <button
+        <div className="flex"><button className="m9-icon" aria-label="Thêm bạn" title="Thêm bạn" onClick={() => setFinding(true)}><UserPlus size={20} /></button><button
           type="button"
           aria-label="Tạo cuộc trò chuyện mới"
           title="Tạo cuộc trò chuyện mới"
@@ -54,8 +62,9 @@ export default function ConversationList() {
           onClick={() => setCreating(true)}
         >
           <Plus size={20} weight="regular" />
-        </button>
+        </button></div>
       </header>
+      {finding && <FindFriendsModal onClose={() => setFinding(false)} />}
 
       <div
         className="px-3 pb-3 border-b"

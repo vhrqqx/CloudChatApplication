@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Eye, EyeSlash } from "@phosphor-icons/react";
 import { useAuth } from "../store/auth.js";
 
 export default function AuthScreen() {
@@ -24,6 +25,9 @@ const inputStyle = {
 };
 
 function Field({ id, label, type = "text", value, onChange, autoFocus, error, rest }) {
+  const [visible, setVisible] = useState(false);
+  const isPassword = type === "password";
+  const visibilityLabel = `${visible ? "Ẩn" : "Hiện"} ${label.toLocaleLowerCase("vi")}`;
   return (
     <div>
       <label
@@ -33,15 +37,30 @@ function Field({ id, label, type = "text", value, onChange, autoFocus, error, re
       >
         {label}
       </label>
+      <div className="relative" style={{ marginTop: 6 }}>
       <input
         id={id}
-        type={type}
+        type={isPassword && visible ? "text" : type}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         autoFocus={autoFocus}
-        style={{ ...inputStyle, marginTop: 6, borderColor: error ? "var(--destructive)" : "var(--border)" }}
+        style={{ ...inputStyle, paddingRight: isPassword ? 44 : 12, borderColor: error ? "var(--destructive)" : "var(--border)" }}
         {...rest}
       />
+      {isPassword && <button
+        type="button"
+        aria-label={visibilityLabel}
+        title={visibilityLabel}
+        aria-pressed={visible}
+        aria-controls={id}
+        onMouseDown={(e) => e.preventDefault()}
+        onClick={() => setVisible((current) => !current)}
+        className="absolute right-0 top-0 flex h-full w-10 items-center justify-center hover:text-[var(--text-primary)]"
+        style={{ background: "transparent", border: "none", borderRadius: "var(--radius-sm)", color: "var(--text-secondary)" }}
+      >
+        {visible ? <EyeSlash size={20} weight="regular" /> : <Eye size={20} weight="regular" />}
+      </button>}
+      </div>
       {error && (
         <p role="alert" className="mt-1 mb-0" style={{ fontSize: "13px", color: "var(--destructive)" }}>
           {error}
@@ -176,6 +195,7 @@ function AuthCard() {
 
         <div className="mt-4">
           <Field
+            key={`password-${mode}`}
             id="password"
             label="Mật khẩu"
             type="password"
@@ -198,6 +218,7 @@ function AuthCard() {
               value={confirmPassword}
               onChange={setConfirmPassword}
               error={errors.confirmPassword}
+              rest={{ autoComplete: "new-password", maxLength: 72 }}
             />
           </div>
         )}

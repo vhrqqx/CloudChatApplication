@@ -1,3 +1,4 @@
+import { useNotifications } from "./notifications.js";
 import { create } from "zustand";
 
 const TYPING_TTL = 2500;
@@ -35,6 +36,7 @@ export const useUi = create((set) => ({
   },
 
   flash: null,
-  flashError: (text) => set({ flash: { id: Date.now(), text } }),
+  flashSuccess: (text) => { set({ flash: { id: Date.now(), text, success: true } }); useNotifications.getState().toast({ kind: "success", text }); },
+  flashError: (text) => { set({ flash: { id: Date.now(), text } }); useNotifications.getState().toast({ kind: "error", text }); },
   clearFlash: () => set({ flash: null }),
 }));

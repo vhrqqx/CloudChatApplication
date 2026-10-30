@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { api } from "../lib/api.js";
+import { useChat } from "./chat.js";
 
 export const useFriends = create((set, get) => ({
   status: "idle",
@@ -56,6 +57,7 @@ export const useFriends = create((set, get) => ({
 
   async accept(requestId) {
     await api(`/friend-request/${requestId}/accept`, { method: "POST" });
+    await useChat.getState().load();
 
     const req = get().incoming.find((r) => r.requestId === requestId);
     set((s) => ({
@@ -65,6 +67,11 @@ export const useFriends = create((set, get) => ({
           ? [...s.friends, { userId: req.otherId, username: req.otherName }]
           : s.friends,
     }));
+  },
+
+  async unfriend(userId) {
+    await api(`/friend-request/friend/${userId}`, { method: "DELETE" });
+    set((s) => ({ friends: s.friends.filter((f) => String(f.userId) !== String(userId)) }));
   },
 
   async decline(requestId) {
@@ -86,7 +93,9 @@ export const useFriends = create((set, get) => ({
     const myId = String(useAuthId());
     if (String(ev.targetId) !== myId) return;
 
-    if (ev.kind === "request") {
+    if (ev.kind === "removed") {
+      set((s) => ({ friends: s.friends.filter((f) => String(f.userId) !== String(ev.friendId)) }));
+    } else if (ev.kind === "request") {
       set((s) => ({
         incoming: [
           {

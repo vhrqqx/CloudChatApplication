@@ -1,5 +1,9 @@
-import { useEffect, useRef, useState } from "react";
-import { DotsThreeVertical } from "@phosphor-icons/react";
+import { useEffect, useRef, useState, useCallback } from "react";
+import { DotsThreeVertical, Eye, PushPin } from "@phosphor-icons/react";
+import { useNebula, roomName, hierarchy } from "../store/nebula.js";
+import QuickPeek from "./QuickPeek.jsx";
+import { useChat } from "../store/chat.js";
+import { isForwardDrag, dropForward } from "../lib/forward.js";
 import Avatar from "./Avatar.jsx";
 import { formatChatListTime } from "../lib/time.js";
 import { useUi } from "../store/ui.js";
@@ -11,6 +15,21 @@ export default function ConversationItem({
   onOpen,
   onAction,
 }) {
+  const pins = useNebula(s=>s.pins);
+  useNebula(s=>s.records);
+  const [peek, setPeek] = useState(null);
+  const [dragOver, setDragOver] = useState(false);
+  const rowRef = useRef(null);
+  const pressRef = useRef(null);
+  const longPressed = useRef(false);
+  const closePeek = useCallback(() => setPeek(null), []);
+  const showPeek = () => setPeek(rowRef.current.getBoundingClientRect());
+  const cancelPress = () => clearTimeout(pressRef.current);
+  useEffect(() => {
+    const release = () => { clearTimeout(pressRef.current); setPeek(null); };
+    window.addEventListener('pointerup', release); window.addEventListener('pointercancel', release); window.addEventListener('blur', release);
+    return () => { release(); window.removeEventListener('pointerup', release); window.removeEventListener('pointercancel', release); window.removeEventListener('blur', release); };
+  }, []);
   const [menuOpen, setMenuOpen] = useState(false);
   const menuWrapRef = useRef(null);
   const presence = useUi((s) => s.presence);
@@ -42,15 +61,31 @@ export default function ConversationItem({
 
   return (
     <div
+      ref={rowRef}
+      onDragOver={(e) => { if (isForwardDrag(e)) { e.preventDefault(); setDragOver(true); } }}
+      onDragLeave={(e) => { if (!e.currentTarget.contains(e.relatedTarget)) setDragOver(false); }}
+      onDrop={(e) => { setDragOver(false); dropForward(e, item); }}
       className={`group relative border-b ${active ? "" : "hover:bg-[var(--bg-item-hover)]"}`}
       style={{
-        background: active ? "var(--bg-item-active)" : undefined,
+        background: active || dragOver ? "var(--bg-item-active)" : undefined,
+        outline: dragOver ? "1px dashed var(--accent)" : undefined,
+        outlineOffset: -1,
         borderColor: "var(--border)",
       }}
     >
       <button
         type="button"
-        onClick={onOpen}
+        onPointerDown={(e) => { if (e.button !== 0) return; longPressed.current = false;  pressRef.current = setTimeout(() => { longPressed.current = true; showPeek(); }, 400); }}
+        onPointerUp={() => { cancelPress(); closePeek(); }}
+        onPointerLeave={cancelPress}
+        onPointerCancel={cancelPress}
+        onClick={(e) => {
+          cancelPress();
+          if (longPressed.current) { longPressed.current = false; return; }
+          if (e.altKey) return;
+          if (e.shiftKey) { if (useChat.getState().selectedId !== item.id) useChat.getState().openSecondary(item.id); return; }
+          onOpen();
+        }}
         aria-current={active ? "true" : undefined}
         className="flex h-16 w-full min-w-0 items-center gap-3 px-3 text-left"
         style={{ background: "transparent", border: "none" }}
@@ -69,8 +104,10 @@ export default function ConversationItem({
               className="truncate"
               style={{ fontSize: "14px", fontWeight: 600, color: "var(--text-primary)" }}
             >
-              {item.displayName || `Cuộc trò chuyện #${item.id}`}
+              {roomName(item) || `Cuộc trò chuyện #${item.id}`}
             </span>
+            {hierarchy(item.id).own.community && <span className="neb-list-badge">Cộng đồng</span>}
+            {pins[item.id] && <PushPin size={12} weight="fill"/>}
             <span
               className="tnum shrink-0"
               style={{
@@ -92,7 +129,7 @@ export default function ConversationItem({
                 minWidth: 0,
               }}
             >
-              {preview}
+              {dragOver ? "Thả để chuyển tiếp" : preview}
             </span>
             {unread > 0 && (
               <span
@@ -115,6 +152,9 @@ export default function ConversationItem({
         </span>
       </button>
 
+      <button className="m9-icon absolute right-10 top-1 opacity-0 group-hover:opacity-100 focus:opacity-100" aria-label={`Xem nhanh ${item.displayName}`} onPointerDown={(e) => { if (e.button === 0) showPeek(); }} onPointerUp={closePeek} onKeyDown={(e) => { if ((e.key === " " || e.key === "Enter") && !e.repeat) { e.preventDefault(); showPeek(); } }} onKeyUp={closePeek} onClick={(e) => e.preventDefault()}><Eye size={16} /></button>
+      <button className="m9-icon absolute right-20 top-1 opacity-0 group-hover:opacity-100 focus:opacity-100" title={pins[item.id]?"Bỏ ghim":"Ghim hội thoại"} aria-label={pins[item.id]?"Bỏ ghim hội thoại":"Ghim hội thoại"} aria-pressed={!!pins[item.id]} onClick={()=>useNebula.getState().pin(item.id)}><PushPin size={16} weight={pins[item.id]?"fill":"regular"}/></button>
+      {peek && <QuickPeek item={item} anchor={peek} onClose={closePeek} onOpen={onOpen} />}
       {action && (
         <div ref={menuWrapRef} className="absolute right-1.5 top-1.5">
         <button

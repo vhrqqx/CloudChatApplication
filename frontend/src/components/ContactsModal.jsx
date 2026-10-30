@@ -32,17 +32,7 @@ export default function ContactsModal({ open, onClose }) {
   async function openDirect(userId) {
     setDirectBusy(true);
     try {
-      const existing = items.find(
-        (it) =>
-          it.type === "DIRECT" &&
-          it.others?.length === 1 &&
-          String(it.others[0]?.id) === String(userId),
-      );
-      if (existing?.id) select(existing.id);
-      else {
-        const conv = await create({ conversationType: "DIRECT", memberId: [userId] });
-        if (conv?.id) select(conv.id);
-      }
+      await useChat.getState().openOrCreateDirectConversation(userId);
       onClose();
     } catch (e) {
       flashError(e.message || "Không mở được cuộc trò chuyện.");

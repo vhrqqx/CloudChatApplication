@@ -1,4 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { api } from "../lib/api.js";
+import { useNebula, memberName } from "../store/nebula.js";
 import Dialog from "./Dialog.jsx";
 import { ChatCircle, UserPlus } from "@phosphor-icons/react";
 import { useChat } from "../store/chat.js";
@@ -6,7 +8,19 @@ import { useFriends } from "../store/friends.js";
 import { useUi } from "../store/ui.js";
 import Avatar from "./Avatar.jsx";
 
-export default function ProfileCard({ open, onClose, userId, username, sourceConversationId }) {
+export default function ProfileCard({ open, onClose, userId, username, sourceConversationId, contextConversationId }) {
+  useNebula(s=>s.records);
+  const alias = memberName(contextConversationId??sourceConversationId,userId,username);
+  const [details, setDetails] = useState(null);
+  const friends = useFriends((s) => s.friends);
+  useEffect(() => {
+    if (!open || userId == null) return;
+    let alive = true;
+    setDetails(null);
+    useFriends.getState().load();
+    api(`/user/${userId}`).then((u) => { if (alive) setDetails(u); }).catch(() => {});
+    return () => { alive = false; };
+  }, [open, userId]);
   const create = useChat((s) => s.create);
   const select = useChat((s) => s.select);
   const items = useChat((s) => s.items);
@@ -28,18 +42,7 @@ export default function ProfileCard({ open, onClose, userId, username, sourceCon
     setBusy(true);
     setError(null);
     try {
-      const existing = items.find(
-        (it) =>
-          it.type === "DIRECT" &&
-          it.others?.length === 1 &&
-          String(it.others[0]?.id) === String(userId),
-      );
-      if (existing?.id) {
-        select(existing.id);
-      } else {
-        const conv = await create({ conversationType: "DIRECT", memberId: [userId] });
-        if (conv?.id) select(conv.id);
-      }
+      await useChat.getState().openOrCreateDirectConversation(userId);
       onClose();
     } catch (e) {
       setError(e.message || "Không mở được cuộc trò chuyện.");
@@ -87,9 +90,10 @@ export default function ProfileCard({ open, onClose, userId, username, sourceCon
           <p
             id="profile-card-title"
             className="m-0 truncate max-w-full"
-            style={{ fontSize: "17px", fontWeight: 600, color: "var(--text-primary)", textAlign: "center" }}
+            style={{ fontSize: "14px", fontWeight: 600, color: "var(--text-primary)", textAlign: "center" }}
           >
-            {username ?? `Người dùng #${userId}`}
+            {alias ?? username ?? `Người dùng #${userId}`}
+            {alias && alias !== username && <small className="block" style={{fontSize:11,color:"var(--text-secondary)"}}>({username})</small>}
           </p>
 
           <p className="m-0" style={{ fontSize: "11px", color: "var(--text-secondary)" }}>
@@ -97,6 +101,8 @@ export default function ProfileCard({ open, onClose, userId, username, sourceCon
           </p>
         </div>
 
+        <div className="mb-3 grid grid-cols-2 gap-2" style={{ fontSize: 12 }}><div className="p-2" style={{ border: '1px solid var(--border)', borderRadius: 6 }}><span style={{ color: 'var(--text-secondary)' }}>Email</span><span className="block break-all">{details?.email ?? 'Đang tải…'}</span></div><div className="p-2" style={{ border: '1px solid var(--border)', borderRadius: 6 }}>ID #{userId}<span className="block" style={{ color: 'var(--text-secondary)' }}>{otherOnline ? 'Đang hoạt động' : 'Chưa rõ trạng thái'}</span></div></div>
+        {relationNow === 'friends' && <button className="mb-2 w-full py-2" style={{ border: '1px solid var(--border)', borderRadius: 6, fontSize: 12, color: 'var(--destructive)' }} disabled={busy} onClick={async () => { setBusy(true); try { await useFriends.getState().unfriend(userId); } catch (e) { setError(e.message); } finally { setBusy(false); } }}>Hủy kết bạn</button>}
         <button
           type="button"
           disabled={busy || relationNow === "outgoing"}

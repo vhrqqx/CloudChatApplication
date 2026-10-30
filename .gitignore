@@ -22,3 +22,15 @@
 # virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
 hs_err_pid*
 replay_pid*
+
+
+# Local tools, generated output and internal documentation
+/frontend/node_modules/
+/frontend/dist/
+/frontend/sticker-sources/
+/frontend/scripts/check-*.mjs
+/frontend/scripts/m9-unit.mjs
+/frontend/DESIGN_CONTRACT.md
+/frontend/SKILL_PLAYBOOK.md
+/frontend/sticker-contact.png
+/nebula-ui-check.png

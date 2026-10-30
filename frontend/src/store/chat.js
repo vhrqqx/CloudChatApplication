@@ -1,9 +1,99 @@
+import { nebulaPreview, nebulaMessage } from "../lib/nebula.js";
+import { isAccountRestricted } from "./accountPolicies.js";
+import { stickerOf } from "../data/stickers.js";
+import { parseReply } from "../lib/reply.js";
 import { create } from "zustand";
 import { api, uploadFile } from "../lib/api.js";
 import { useAuth } from "./auth.js";
 import { syncConversations } from "../lib/ws.js";
 
 const PAGE_SIZE = 50;
+let conversationsLoading = null;
+const directRequests = new Map();
+function uniqueConversations(items) {
+  const sorted = [...items].sort((a, b) => Number(Boolean(b.preview)) - Number(Boolean(a.preview)) || new Date(b.previewAt ?? b.createdAt) - new Date(a.previewAt ?? a.createdAt));
+  const seen = new Set();
+  return sorted.filter((item) => {
+    const key = item.type === 'DIRECT' && item.others?.length === 1 ? `direct:${item.others[0].id}` : `id:${item.id}`;
+    if (seen.has(key)) return false;
+    seen.add(key); return true;
+  }).sort((a, b) => new Date(b.previewAt ?? b.createdAt) - new Date(a.previewAt ?? a.createdAt));
+}
+const ATTACHMENT_CACHE_KEY = "cloudchat-attachment-map-v1";
+let attachmentMap;
+
+function getAttachmentMap() {
+  if (attachmentMap) return attachmentMap;
+  try {
+    attachmentMap = JSON.parse(localStorage.getItem(ATTACHMENT_CACHE_KEY) || "{}");
+  } catch {
+    attachmentMap = {};
+  }
+  attachmentMap.byMessage ??= {};
+  attachmentMap.byName ??= {};
+  return attachmentMap;
+}
+
+function saveAttachmentMap() {
+  try { localStorage.setItem(ATTACHMENT_CACHE_KEY, JSON.stringify(getAttachmentMap())); } catch {}
+}
+
+function attachmentRecord(conversationId, messageId, metadata, filename, createdAt) {
+  if (!metadata?.id || !filename) return;
+  const record = {
+    id: metadata.id,
+    filename: metadata.filename || filename,
+    contentType: metadata.contentType || "",
+    size: metadata.size ?? null,
+    downloadUrl: metadata.downloadUrl || `/api/v1/attachment/${metadata.id}/download`,
+    conversationId: String(conversationId),
+    messageId: messageId == null ? null : String(messageId),
+    savedAt: Date.now(),
+    createdAt: createdAt || null,
+  };
+  const map = getAttachmentMap();
+  if (record.messageId) map.byMessage[`${record.conversationId}:${record.messageId}`] = record;
+  map.byName[`${record.conversationId}:${filename}`] = record;
+  saveAttachmentMap();
+  return record;
+}
+
+export function attachmentOfMessage(conversationId, message) {
+  if (!message) return null;
+
+  const filename = message.filename ?? message.attachment?.filename ?? attachmentNameOf(message.content);
+  const directId = message.attachment?.id ?? message.attachmentId;
+  if (directId) return {
+    id: directId,
+    filename: message.attachment?.filename ?? message.filename ?? filename,
+    contentType: message.attachment?.contentType ?? message.contentType ?? "",
+    size: message.attachment?.size ?? message.size ?? null,
+    downloadUrl: message.attachment?.downloadUrl ?? message.downloadUrl ?? `/api/v1/attachment/${directId}/download`,
+  };
+  if (!filename) return message.attachment ?? null;
+
+  const map = getAttachmentMap();
+  const messageKey = `${String(conversationId)}:${String(message.id)}`;
+  let record = map.byMessage[messageKey];
+  if (!record) {
+    const byName = map.byName[`${String(conversationId)}:${filename}`];
+    if (byName) {
+      const createdAt = message.createdAt ? new Date(message.createdAt).getTime() : NaN;
+      const savedAt = Number(byName.savedAt);
+      const nearUpload = !Number.isFinite(createdAt) || Math.abs(createdAt - savedAt) < 10 * 60 * 1000;
+      if (nearUpload) record = byName;
+    }
+  }
+  if (!record?.id) return message.attachment ?? null;
+  if (message.id != null) map.byMessage[messageKey] = { ...record, messageId: String(message.id) };
+  saveAttachmentMap();
+  return record;
+}
+
+function hydrateMessage(conversationId, message) {
+  const attachment = attachmentOfMessage(conversationId, message);
+  return attachment ? { ...message, attachment } : message;
+}
 
 export const ATTACHMENT_PREFIX = "[File:";
 export function attachmentNameOf(content) {
@@ -13,50 +103,73 @@ export function attachmentNameOf(content) {
   return name || null;
 }
 
+function messagePreview(message) {
+  if (!message) return null;
+  const special = nebulaPreview(message.content); if (special) return special;
+  const sticker = stickerOf(message.content);
+  if (sticker) return `[Hình động] ${sticker.name}`;
+  const reply = parseReply(message.content);
+  if (reply) return reply.text;
+  const filename = message.filename ?? message.attachment?.filename ?? attachmentNameOf(message.content);
+  const isImage = /^image\//i.test(message.contentType ?? message.attachment?.contentType ?? "") ||
+    /\.(jpe?g|png|gif|webp|bmp|svg)$/i.test(filename ?? "");
+  return isImage ? "[Hình ảnh]" : message.content;
+}
+
 export const useChat = create((set, get) => ({
   status: "idle",
   error: null,
   items: [],
   selectedId: null,
+  secondaryId: null,
+  splitOpen: false,
+  openSecondary(id) { set({ secondaryId: id, splitOpen: true }); },
+  swapPanes() { set((s) => s.secondaryId == null ? {} : ({ selectedId: s.secondaryId, secondaryId: s.selectedId })); },
+  replacePane(secondary, id) { set((s) => secondary ? ({ secondaryId: id, selectedId: String(s.selectedId) === String(id) ? s.secondaryId : s.selectedId }) : ({ selectedId: id, secondaryId: String(s.secondaryId) === String(id) ? s.selectedId : s.secondaryId })); },
+  closeSplit() { set({ secondaryId: null, splitOpen: false }); },
   messages: {},
   members: {},
 
   select(id) {
-    set({ selectedId: id });
+    set((s) => ({ selectedId: id, secondaryId: String(s.secondaryId) === String(id) ? null : s.secondaryId }));
   },
 
   reset() {
-    set({ status: "idle", error: null, items: [], selectedId: null, messages: {}, members: {} });
+    set({ status: "idle", error: null, items: [], selectedId: null, secondaryId: null, splitOpen: false, messages: {}, members: {} });
   },
 
   async load() {
-    if (get().status === "loading") return;
+    if (conversationsLoading) return conversationsLoading;
     set({ status: "loading", error: null });
-    try {
-      const page = await api("/conversation?page=0&size=100&sort=createdAt,desc");
-      const base = (page?.content ?? []).map((c) => ({
-        id: c.id,
-        type: c.conversationType,
-        createdAt: c.createdAt,
-        displayName: null,
-        role: null,
-        others: [],
-        membersCount: 0,
-        preview: null,
-        previewAt: c.createdAt,
-        unreadCount: 0,
-      }));
-      base.sort(
-        (a, b) =>
-          new Date(b.previewAt ?? b.createdAt) - new Date(a.previewAt ?? a.createdAt),
-      );
-      set({ items: base, status: "ready" });
-      await Promise.allSettled(base.map((it) => get().refreshMembers(it.id, { withPreview: true })));
-
-      syncConversations(get().items.map((i) => i.id));
-    } catch (e) {
-      set({ status: "error", error: e.message });
-    }
+    conversationsLoading = (async () => {
+      try {
+        const all = [];
+        for (let page = 0; ; page++) {
+          const result = await api(`/conversation?page=${page}&size=100&sort=createdAt,desc`);
+          const rows = result?.content ?? [];
+          all.push(...rows);
+          if (rows.length < 100 || result?.page?.totalPages <= page + 1) break;
+        }
+        syncConversations(all.map((c) => c.id));
+        const hydrated = await Promise.all(all.map(async (c) => {
+          const [members, history] = await Promise.all([api(`/conversation-member?conversationId=${c.id}`), api(`/message?conversationId=${c.id}&page=0&size=1`)]);
+          const others = (members ?? []).filter((m) => String(m.id) !== String(useAuth.getState().user?.id));
+          return { id: c.id, type: c.conversationType, createdAt: c.createdAt, members, others,
+            title: c.title, displayName: c.title || others.map((m) => m.username).join(', ') || 'Bạn', membersCount: members.length,
+            role: members.find((m) => String(m.id) === String(useAuth.getState().user?.id))?.role,
+            preview: messagePreview(history?.content?.[0]), previewAt: history?.content?.[0]?.createdAt ?? c.createdAt };
+        }));
+        set((state) => {
+          const items = uniqueConversations(hydrated.map((c) => ({ ...c, unreadCount: state.items.find((i) => String(i.id) === String(c.id))?.unreadCount ?? 0 })));
+          const canonical = (id) => {
+            const previous = state.items.find((i) => String(i.id) === String(id));
+            return previous?.type === 'DIRECT' ? items.find((i) => i.type === 'DIRECT' && String(i.others?.[0]?.id) === String(previous.others?.[0]?.id))?.id ?? id : id;
+          };
+          return { items, status: 'ready', selectedId: canonical(state.selectedId), secondaryId: canonical(state.secondaryId), members: { ...state.members, ...Object.fromEntries(hydrated.map((c) => [String(c.id), c.members])) } };
+        });
+      } catch (e) { set({ status: 'error', error: e.message }); throw e; }
+    })();
+    try { return await conversationsLoading; } finally { conversationsLoading = null; }
   },
 
   patchFromMembers(id, members, last) {
@@ -78,12 +191,12 @@ export const useChat = create((set, get) => ({
           displayName:
             it.type === "DIRECT"
               ? others[0] ? (others[0].username ?? "Bạn") : "Bạn"
-              : others.length
+              : it.title || (others.length
                 ? others.map((o) => o.username).join(", ")
-                : "Bạn",
+                : "Bạn"),
         };
         if (last !== undefined) {
-          next.preview = last ? last.content : null;
+          next.preview = messagePreview(last);
           next.previewAt = last ? last.createdAt : it.createdAt;
         }
         return next;
@@ -114,7 +227,7 @@ export const useChat = create((set, get) => ({
     }));
     try {
       const page = await api(`/message?conversationId=${id}&page=0&size=${PAGE_SIZE}`);
-      const list = (page?.content ?? []).slice().reverse();
+      const list = (page?.content ?? []).map((message) => hydrateMessage(id, message)).slice().reverse();
       set((s) => ({
         messages: {
           ...s.messages,
@@ -147,7 +260,7 @@ export const useChat = create((set, get) => ({
     }));
     try {
       const page = await api(`/message?conversationId=${id}&page=${nextPage}&size=${PAGE_SIZE}`);
-      const older = (page?.content ?? []).slice().reverse();
+      const older = (page?.content ?? []).map((message) => hydrateMessage(id, message)).slice().reverse();
       const hasMore = (page?.content ?? []).length === PAGE_SIZE;
       set((s) => {
         const cur = s.messages[key];
@@ -182,7 +295,7 @@ export const useChat = create((set, get) => ({
 
     try {
       const page = await api(`/message?conversationId=${id}&page=0&size=${PAGE_SIZE}`);
-      const fresh = (page?.content ?? []).slice().reverse();
+      const fresh = (page?.content ?? []).map((message) => hydrateMessage(id, message)).slice().reverse();
       set((s) => {
         const oldList = entry?.list ?? [];
 
@@ -219,7 +332,7 @@ export const useChat = create((set, get) => ({
         set((s) => ({
           items: s.items.map((it) =>
             String(it.id) === key
-              ? { ...it, preview: last.content, previewAt: last.createdAt }
+              ? { ...it, preview: messagePreview(last), previewAt: last.createdAt }
               : it,
           ),
         }));
@@ -236,13 +349,16 @@ export const useChat = create((set, get) => ({
       set((s) => {
         const key = String(id);
         const cur = s.messages[key];
-        if (!cur?.list) return {};
+        if (!cur?.list) {
+          attachmentRecord(id, null, att, att.filename, new Date().toISOString());
+          return {};
+        }
 
         const candidates = cur.list.filter(
-          (m) =>
-            attachmentNameOf(m.content) === att.filename && !m.attachment,
+          (m) => attachmentNameOf(m.content) === att.filename,
         );
         const target = candidates[candidates.length - 1];
+        attachmentRecord(id, target?.id, att, att.filename, target?.createdAt ?? new Date().toISOString());
         if (!target) return {};
         return {
           messages: {
@@ -253,13 +369,7 @@ export const useChat = create((set, get) => ({
                 m.id === target.id
                   ? {
                       ...m,
-                      attachment: {
-                        id: att.id,
-                        filename: att.filename,
-                        contentType: att.contentType,
-                        size: att.size,
-                        downloadUrl: att.downloadUrl,
-                      },
+                      attachment: attachmentOfMessage(id, { ...m, ...att, attachmentId: att.id }),
                     }
                   : m,
               ),
@@ -389,6 +499,9 @@ export const useChat = create((set, get) => ({
   },
 
   applyIncoming(msg) {
+    if (msg?.conversationId && !get().items.some((c) => String(c.id) === String(msg.conversationId))) {
+      get().load().then(() => { if (get().items.some((c) => String(c.id) === String(msg.conversationId))) get().applyIncoming(msg); }).catch(() => {});
+    }
     if (!msg?.conversationId || !msg?.id) return;
     const key = String(msg.conversationId);
     const myId = useAuth.getState().user?.id;
@@ -401,15 +514,15 @@ export const useChat = create((set, get) => ({
         const list = [...entry.list, msg].sort(
           (a, b) => new Date(a.createdAt) - new Date(b.createdAt),
         );
-        s.messages = { ...s.messages, [key]: { status: "ready", list } };
+        s.messages = { ...s.messages, [key]: { ...entry, status: "ready", list } };
       }
 
       const idx = s.items.findIndex((i) => String(i.id) === key);
       if (idx >= 0) {
         const conv = s.items[idx];
         const unread =
-          fromMe || String(s.selectedId) === key ? 0 : (conv.unreadCount ?? 0) + 1;
-        const updated = { ...conv, preview: msg.content, previewAt: msg.createdAt, unreadCount: unread };
+          fromMe || String(s.selectedId) === key || (s.splitOpen && String(s.secondaryId) === key) ? 0 : (conv.unreadCount ?? 0) + 1;
+        const updated = { ...conv, preview: messagePreview(msg), previewAt: msg.createdAt, unreadCount: unread };
         const items = [...s.items];
         items.splice(idx, 1);
         items.unshift(updated);
@@ -429,10 +542,30 @@ export const useChat = create((set, get) => ({
     }));
   },
 
-  async create({ conversationType = "DIRECT", memberId }) {
+  async openOrCreateDirectConversation(targetUserId) {
+    if (isAccountRestricted(targetUserId)) throw new Error("Tài khoản đã bị chặn hoặc ẩn. Hãy quản lý trong Hồ sơ & Cài đặt.");
+    const key = String(targetUserId);
+    if (directRequests.has(key)) return directRequests.get(key);
+    const request = (async () => {
+      await get().load();
+      const existing = get().items.find((c) => c.type === 'DIRECT' && c.others?.length === 1 && String(c.others[0].id) === key);
+      let result = existing;
+      if (!result) {
+        result = await api('/conversation', { method: 'POST', body: { conversationType: 'DIRECT', memberId: [targetUserId] } });
+        await get().load();
+      }
+      set({ selectedId: result.id });
+      return result;
+    })();
+    directRequests.set(key, request);
+    try { return await request; } finally { directRequests.delete(key); }
+  },
+
+  async create({ conversationType = "DIRECT", memberId, title }) {
+    if (conversationType === 'DIRECT') return get().openOrCreateDirectConversation(memberId[0]);
     const conv = await api("/conversation", {
       method: "POST",
-      body: { conversationType, memberId },
+      body: { conversationType, memberId, title },
     });
     await get().load();
     if (conv?.id) set({ selectedId: conv.id });
@@ -447,7 +580,7 @@ export const useChat = create((set, get) => ({
       delete messages[String(id)];
       const members = { ...s.members };
       delete members[String(id)];
-      return { items, messages, members, selectedId: s.selectedId === id ? null : s.selectedId };
+      return { items, messages, members, selectedId: s.selectedId === id ? null : s.selectedId, secondaryId: s.secondaryId === id ? null : s.secondaryId };
     });
     syncConversations(get().items.map((i) => i.id));
   },
@@ -460,7 +593,7 @@ export const useChat = create((set, get) => ({
       delete messages[String(id)];
       const members = { ...s.members };
       delete members[String(id)];
-      return { items, messages, members, selectedId: s.selectedId === id ? null : s.selectedId };
+      return { items, messages, members, selectedId: s.selectedId === id ? null : s.selectedId, secondaryId: s.secondaryId === id ? null : s.secondaryId };
     });
     syncConversations(get().items.map((i) => i.id));
   },
@@ -470,6 +603,11 @@ export const useChat = create((set, get) => ({
       method: "POST",
       body: { userId },
     });
+    await get().refreshMembers(id);
+  },
+
+  async transferAdmin(id, userId) {
+    await api(`/conversation-member/${userId}/transfer-admin?conversationId=${id}`, { method: "PATCH" });
     await get().refreshMembers(id);
   },
 
