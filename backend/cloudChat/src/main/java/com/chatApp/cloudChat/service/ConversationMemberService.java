@@ -26,6 +26,8 @@ import java.util.stream.Collectors;
 
 @Service
 public class ConversationMemberService {
+    private final com.chatApp.cloudChat.repository.NebulaRepo nebulaRepo;
+    private final tools.jackson.databind.ObjectMapper json;
     private final ConversationMemberRepo conversationMemberRepo;
     private final ConversationRepo conversationRepo;
     private final UsersRepo usersRepo;
@@ -35,7 +37,8 @@ public class ConversationMemberService {
 
     public ConversationMemberService(ConversationMemberRepo conversationMemberRepo, ConversationRepo conversationRepo,
                                      UsersRepo usersRepo, ConversationPurgeService purgeService,
-                                     ApplicationEventPublisher eventPublisher, FriendService friendService) {
+                                     ApplicationEventPublisher eventPublisher, FriendService friendService, com.chatApp.cloudChat.repository.NebulaRepo nebulaRepo, tools.jackson.databind.ObjectMapper json) {
+        this.nebulaRepo = nebulaRepo; this.json = json;
         this.conversationMemberRepo = conversationMemberRepo;
         this.conversationRepo = conversationRepo;
         this.usersRepo = usersRepo;
@@ -66,7 +69,11 @@ public class ConversationMemberService {
             throw new IllegalArgumentException("Người dùng đã là thành viên của cuộc trò chuyện");
         }
 
-        if (!friendService.areFriends(currentUserId, request.userId())) {
+        boolean communityMember = nebulaRepo.findById("meta-"+conversationId).map(meta -> {
+            Object parent = json.readValue(meta.payload, java.util.Map.class).get("parentId");
+            return parent != null && isMember(Long.valueOf(parent.toString()), request.userId());
+        }).orElse(false);
+        if (!communityMember && !friendService.areFriends(currentUserId, request.userId())) {
             throw new AccessDeniedException("Chỉ có thể thêm bạn bè vào nhóm — hãy kết bạn qua nhóm này trước.");
         }
 
@@ -179,6 +186,24 @@ public class ConversationMemberService {
         targetMember.setRole(newRole);
         ConversationMember saved = conversationMemberRepo.save(targetMember);
         return new MemberResponse(saved.getUserId(), saved.getUser().getUsername(), saved.getRole());
+    }
+
+    @Transactional
+    public void transferAdmin(Long conversationId, Long currentUserId, Long targetUserId) {
+        if (currentUserId.equals(targetUserId)) throw new IllegalArgumentException("Hãy chọn thành viên khác để chuyển quyền.");
+        List<ConversationMember> locked = conversationMemberRepo.findAllByConversationIdForUpdate(conversationId);
+        ConversationMember current = locked.stream().filter(m -> m.getUserId().equals(currentUserId))
+                .findFirst().orElseThrow(() -> new AccessDeniedException("Bạn không phải thành viên nhóm."));
+        if (current.getConversation().getConvoType() != ConversationType.GROUP || current.getRole() != MemberRole.ADMIN) {
+            throw new AccessDeniedException("Chỉ quản trị viên nhóm mới được chuyển quyền.");
+        }
+        ConversationMember target = locked.stream().filter(m -> m.getUserId().equals(targetUserId))
+                .findFirst().orElseThrow(() -> new MemberNotFoundException("Người nhận quyền không còn trong nhóm."));
+        target.setRole(MemberRole.ADMIN);
+        current.setRole(MemberRole.MEMBER);
+        conversationMemberRepo.flush();
+        for (ConversationMember member : locked) eventPublisher.publishEvent(new com.chatApp.cloudChat.event.ContactEvent(Map.of(
+                "kind", "rolesChanged", "targetId", member.getUserId(), "conversationId", conversationId)));
     }
 
     // Tìm kiếm thành viên và cuộc trò chuyện

@@ -22,14 +22,16 @@ import com.chatApp.cloudChat.repository.MessagesRepo;
 
 @Service
 public class MessageService {
+    private final AccountPolicyService accountPolicies;
     private final MessagesRepo messagesRepo;
     private final ConversationRepo conversationRepo;
     private final ConversationMemberService conversationMemberService;
     private final UsersRepo usersRepo;
     private final ConversationPurgeService purgeService;
     private final org.springframework.context.ApplicationEventPublisher eventPublisher;
-    public MessageService(MessagesRepo messagesRepo, ConversationRepo conversationRepo, ConversationMemberService conversationMemberService, UsersRepo usersRepo, ConversationPurgeService purgeService, org.springframework.context.ApplicationEventPublisher eventPublisher) {
+    public MessageService(MessagesRepo messagesRepo, ConversationRepo conversationRepo, ConversationMemberService conversationMemberService, UsersRepo usersRepo, ConversationPurgeService purgeService, org.springframework.context.ApplicationEventPublisher eventPublisher, AccountPolicyService accountPolicies) {
         this.messagesRepo = messagesRepo;
+        this.accountPolicies = accountPolicies;
         this.conversationRepo = conversationRepo;
         this.conversationMemberService = conversationMemberService;
         this.usersRepo = usersRepo;
@@ -44,6 +46,7 @@ public class MessageService {
     }
     @Transactional
     public MessageResponse sendMessage(Long conversationId, Long senderId, SendMessageRequest request) {
+        accountPolicies.requireConversationAllowed(conversationId, senderId);
         if (!conversationMemberService.isMember(conversationId, senderId)) throw new AccessDeniedException("Bạn không phải là thành viên của cuộc trò chuyện này!");
         Conversation conversation = conversationRepo.findById(conversationId).orElseThrow(() -> new ConversationNotFoundException("Không tìm thấy cuộc hội thoại " + conversationId));
         User sender = usersRepo.findByIdAndIsDeletedFalse(senderId).orElseThrow(() -> new UserNotFoundException("Không tìm thấy người dùng + " + senderId));

@@ -27,6 +27,12 @@ public class FriendController {
         this.friendService = friendService;
     }
 
+    @DeleteMapping("/friend/{userId}")
+    public ResponseEntity<Void> unfriend(@PathVariable Long userId, @AuthenticationPrincipal AppUserPrincipal principal) {
+        friendService.unfriend(principal.getId(), userId);
+        return ResponseEntity.noContent().build();
+    }
+
     @GetMapping
     public ContactsResponse contacts(@AuthenticationPrincipal AppUserPrincipal principal) {
         return friendService.contacts(principal.getId());

@@ -24,12 +24,12 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
-import java.util.Set;
 import java.util.UUID;
 
 
 @Service
 public class AttachmentService {
+    private final AccountPolicyService accountPolicies;
     private static final long MAX_FILE_SIZE = 50L * 1024 * 1024;
     private final AttachmentRepo attachmentRepo;
     private final ConversationMemberService memberService;
@@ -37,25 +37,13 @@ public class AttachmentService {
     private final FileStorage fileStorage;
     private final ConversationPurgeService purgeService;
 
-    private static final Set<String> ALLOWED_MIME_TYPES = Set.of(
-            // Ảnh
-            "image/jpeg", "image/png", "image/webp", "image/gif",
-            // Tài liệu & văn bản
-            "application/pdf",
-            "text/plain",
-            "application/vnd.openxmlformats-officedocument.wordprocessingml.document", // .docx
-            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",      // .xlsx
-            // File nén, âm thanh và audio
-            "application/zip",
-            "audio/mpeg",
-            "video/mp4"
-    );
     private final ConversationRepo conversationRepo;
     private final UsersRepo usersRepo;
     private final MessagesRepo messagesRepo;
 
-    public AttachmentService(AttachmentRepo attachmentRepo, ConversationMemberService memberService, Tika tika, FileStorage fileStorage, ConversationRepo conversationRepo, UsersRepo usersRepo, MessagesRepo messagesRepo, ConversationPurgeService purgeService) {
+    public AttachmentService(AttachmentRepo attachmentRepo, ConversationMemberService memberService, Tika tika, FileStorage fileStorage, ConversationRepo conversationRepo, UsersRepo usersRepo, MessagesRepo messagesRepo, ConversationPurgeService purgeService, AccountPolicyService accountPolicies) {
         this.attachmentRepo = attachmentRepo;
+        this.accountPolicies = accountPolicies;
         this.memberService = memberService;
         this.tika = tika;
         this.fileStorage = fileStorage;
@@ -88,6 +76,7 @@ public class AttachmentService {
 
     @Transactional
     public AttachmentResponse sendAttachment(Long conversationId, Long senderId, MultipartFile file) {
+        accountPolicies.requireConversationAllowed(conversationId, senderId);
         if (!memberService.isMember(conversationId, senderId)) throw new AccessDeniedException("Bạn không phải là thành viên của cuộc trò chuyện này!");
         if (file == null || file.isEmpty()) throw new IllegalArgumentException("File đính kèm không được để trống!");
         if (file.getSize() > MAX_FILE_SIZE) throw new ExceededFileSizeException("Dung lượng file quá lớn! Vui lòng gửi file có kích cỡ dưới 50MB");
@@ -145,7 +134,7 @@ public class AttachmentService {
         } catch (IOException e) {
             throw new IllegalArgumentException("Không thể đọc được định dạng của file");
         }
-        if (!ALLOWED_MIME_TYPES.contains(mimeType)) throw new IllegalArgumentException("Định dạng không được hỗ trợ hoặc bị chặn vì lý do an toàn " + mimeType);
+        if (mimeType == null || mimeType.isBlank()) throw new IllegalArgumentException("Không xác định được định dạng của tệp");
         return mimeType;
     }
 }

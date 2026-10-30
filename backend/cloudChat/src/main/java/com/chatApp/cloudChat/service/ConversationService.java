@@ -27,14 +27,16 @@ public class ConversationService {
     private final ConversationMemberService memberService;
     private final ConversationPurgeService purgeService;
     private final FriendService friendService;
+    private final DirectConversationService directConversations;
 
-    public ConversationService(ConversationRepo conversationRepo, UsersRepo usersRepo, ConversationMemberRepo conversationMemberRepo, ConversationMemberService memberService, ConversationPurgeService purgeService, FriendService friendService) {
+    public ConversationService(ConversationRepo conversationRepo, UsersRepo usersRepo, ConversationMemberRepo conversationMemberRepo, ConversationMemberService memberService, ConversationPurgeService purgeService, FriendService friendService, DirectConversationService directConversations) {
         this.conversationRepo = conversationRepo;
         this.usersRepo = usersRepo;
         this.conversationMemberRepo = conversationMemberRepo;
         this.memberService = memberService;
         this.purgeService = purgeService;
         this.friendService = friendService;
+        this.directConversations = directConversations;
     }
     @Transactional
     public ConversationResponse createConversation(CreateConversationRequest request, Long creatorId) {
@@ -48,6 +50,9 @@ public class ConversationService {
         if (request.conversationType() == ConversationType.DIRECT && otherUserIds.size() != 1) {
             throw new IllegalArgumentException("Đây là hộp thoại tin nhắn riêng, chỉ có thể có bạn và người nhận!");
         }
+        if (request.conversationType() == ConversationType.GROUP && otherUserIds.size() < 2) {
+            throw new IllegalArgumentException("Nhóm phải có ít nhất 3 thành viên, gồm bạn và ít nhất 2 người khác.");
+        }
 
         if (!otherUserIds.isEmpty()) {
             List<Long> notFriends = friendService.filterNonFriends(creatorId, java.util.List.copyOf(otherUserIds));
@@ -57,7 +62,10 @@ public class ConversationService {
                         : "Chỉ có thể mời bạn bè vào nhóm — hãy kết bạn với họ qua nhóm hiện có.");
             }
         }
-        Conversation savedConversation = conversationRepo.save(new Conversation(request.conversationType()));
+        if (request.conversationType() == ConversationType.DIRECT) return ConversationResponse.from(directConversations.getOrCreate(creatorId, otherUserIds.iterator().next()));
+        Conversation group = new Conversation(request.conversationType());
+        if (request.title() != null && !request.title().isBlank()) group.setTitle(request.title().trim());
+        Conversation savedConversation = conversationRepo.save(group);
         List<ConversationMember> membersToSave = new ArrayList<>();
         //Gán role ADMIN cho người tạo cuộc hội thoại
         MemberRole creatorRole = (request.conversationType() == ConversationType.GROUP) ? MemberRole.ADMIN : MemberRole.MEMBER;

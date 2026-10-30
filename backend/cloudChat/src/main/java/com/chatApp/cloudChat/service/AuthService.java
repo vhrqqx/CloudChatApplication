@@ -39,6 +39,6 @@ public class AuthService {
                 issued.token(),
                 "Bearer",
                 issued.expiresAt(),
-                new UserResponse(principal.getId(), principal.getDisplayName()));
+                new UserResponse(principal.getId(), principal.getDisplayName(), request.userEmail().trim().toLowerCase()));
     }
 }

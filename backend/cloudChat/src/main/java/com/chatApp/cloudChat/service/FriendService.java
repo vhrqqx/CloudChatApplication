@@ -30,6 +30,8 @@ import com.chatApp.cloudChat.repository.UsersRepo;
 @Service
 public class FriendService {
 
+    private final AccountPolicyService accountPolicies;
+    private final DirectConversationService directConversations;
     private final FriendRequestRepo friendRepo;
     private final UsersRepo usersRepo;
     private final ConversationRepo conversationRepo;
@@ -38,7 +40,9 @@ public class FriendService {
 
     public FriendService(FriendRequestRepo friendRepo, UsersRepo usersRepo,
                          ConversationRepo conversationRepo, ConversationMemberRepo memberRepo,
-                         ApplicationEventPublisher eventPublisher) {
+                         ApplicationEventPublisher eventPublisher, DirectConversationService directConversations, AccountPolicyService accountPolicies) {
+        this.directConversations = directConversations;
+        this.accountPolicies = accountPolicies;
         this.friendRepo = friendRepo;
         this.usersRepo = usersRepo;
         this.conversationRepo = conversationRepo;
@@ -48,6 +52,7 @@ public class FriendService {
 
     @Transactional
     public String send(Long senderId, CreateFriendRequest request) {
+        accountPolicies.requireUnblocked(senderId, request.receiverId());
         if (request.receiverId() == null) {
             throw new IllegalArgumentException("Cần có người nhận lời mời.");
         }
@@ -108,13 +113,18 @@ public class FriendService {
         fr.setRespondedAt(Instant.now());
         friendRepo.save(fr);
 
+        Long conversationId = directConversations.getOrCreate(fr.getSenderId(), fr.getReceiverId()).getConversationId();
         String receiverName = fr.getReceiver().getUsername();
         String senderName = fr.getSender().getUsername();
 
         publish("accepted", fr.getReceiverId(), Map.of(
+                "conversationId", conversationId,
+                "acceptedBy", receiverId,
                 "friendId", fr.getSenderId(),
                 "friendName", senderName));
         publish("accepted", fr.getSenderId(), Map.of(
+                "conversationId", conversationId,
+                "acceptedBy", receiverId,
                 "friendId", fr.getReceiverId(),
                 "friendName", receiverName));
     }
@@ -144,6 +154,16 @@ public class FriendService {
         publish("cancelled", fr.getReceiverId(), Map.of(
                 "targetId", senderId,
                 "requestId", requestId));
+    }
+
+    @Transactional
+    public void unfriend(Long userId, Long otherId) {
+        FriendRequest relation = friendRepo.findAcceptedOf(userId).stream()
+                .filter(f -> f.getSenderId().equals(otherId) || f.getReceiverId().equals(otherId))
+                .findFirst().orElseThrow(() -> new IllegalArgumentException("Hai người chưa là bạn bè."));
+        friendRepo.delete(relation);
+        publish("removed", userId, Map.of("friendId", otherId));
+        publish("removed", otherId, Map.of("friendId", userId));
     }
 
     @Transactional(readOnly = true)

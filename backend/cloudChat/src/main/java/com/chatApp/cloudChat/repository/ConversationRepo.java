@@ -11,6 +11,11 @@ import com.chatApp.cloudChat.model.Conversation;
 
 @Repository
 public interface ConversationRepo extends JpaRepository<Conversation, Long> {
+    @Query("select c from Conversation c where c.convoType = com.chatApp.cloudChat.model.ConversationType.DIRECT "
+            + "and (select count(m) from ConversationMember m where m.conversation = c) = 2 "
+            + "and exists (select m from ConversationMember m where m.conversation = c and m.user.id = :a) "
+            + "and exists (select m from ConversationMember m where m.conversation = c and m.user.id = :b) order by c.id asc")
+    java.util.List<Conversation> findDirectBetween(@Param("a") Long a, @Param("b") Long b);
     @Query("select c from Conversation c join ConversationMember m on m.conversation = c where m.user.id = :userId")
     Page<Conversation> findByMember(@Param("userId") Long userId, Pageable pageable);
 }

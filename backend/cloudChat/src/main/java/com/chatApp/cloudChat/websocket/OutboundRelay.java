@@ -26,6 +26,11 @@ public class OutboundRelay {
     }
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    public void onNebulaMessage(com.chatApp.cloudChat.event.NebulaMessageEvent event) {
+        messagingTemplate.convertAndSend("/topic/conversation/"+event.conversationId(), event.message());
+    }
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void onContactEvent(ContactEvent event) {
         messagingTemplate.convertAndSend("/topic/contacts", (java.lang.Object) event.payload());
     }

@@ -44,6 +44,13 @@ public class ConversationMemberController {
         return ResponseEntity.ok(updatedUser);
     }
 
+    @PatchMapping("/{userId}/transfer-admin")
+    public ResponseEntity<Void> transferAdmin(@PathVariable Long userId,
+            @RequestParam Long conversationId, @AuthenticationPrincipal AppUserPrincipal principal) {
+        memberService.transferAdmin(conversationId, principal.getId(), userId);
+        return ResponseEntity.noContent().build();
+    }
+
     @DeleteMapping("/{userId}")
     public ResponseEntity<Void> removeMember(@PathVariable Long userId,
                                              @RequestParam Long conversationId,
